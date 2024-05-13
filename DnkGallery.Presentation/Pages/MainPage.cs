@@ -1,62 +1,39 @@
-﻿using Uno.Extensions;
+﻿using Microsoft.UI.Xaml;
+using DataTemplate = CSharpMarkup.WinUI.DataTemplate;
 
 namespace DnkGallery.Presentation.Pages;
 
-partial class MainPage {
+partial class MainPage{
+    private Grid AppTitleBar(string title) => Grid(
+            Columns(Auto, Auto),
+            Image().Width(16).Height(16)
+                .HorizontalAlignment(HorizontalAlignment.Left)
+                .VCenter(),
+            TextBlock()
+                .Margin(12, 0, 0, 0)
+                .Grid_Column(1)
+                .Text(title)
+                .VCenter().Margin(28, 0, 0, 0)
+        )
+        .Height(48)
+        .Margin(48, 0, 0, 0)
+        .VerticalAlignment(VerticalAlignment.Top)
+        .Padding(0);
+    
     public void BuildUI() => Content(
-        NavigationView(
-            Frame()
-        ).MenuItemsSource(categories)
-            .MenuItemTemplate(NavigationViewTemplate())
+        Grid(
+            AppTitleBar("DnkGallery"),
+            NavigationView(
+                    Frame()
+                ).MenuItemsSource().Bind(vm.NavigationViewItems)
+            .MenuItemTemplate(MenuItemTemplate)
+        )
     );
     
-    private DataTemplate NavigationViewTemplate() => DataTemplate(x => {
-            var category = x.Get<Category>();
-            NavigationViewItem(Content: category.Name, Icon: Icon(category.Icon)).MenuItemsSource(category.Children);
-        }
-    );
+
     
-    public class Category {
-        public String Name { get; set; }
-        public String Icon { get; set; }
-        public ObservableCollection<Category> Children { get; set; }
-    }
-    
-    private readonly ObservableCollection<Category> categories = [
-        new Category {
-            Name = "Menu Item 1",
-            Icon = "Icon",
-            Children = [
-                new Category {
-                    Name = "Menu Item 2",
-                    Icon = "Icon",
-                    Children = [
-                        new Category {
-                            Name = "Menu Item 2",
-                            Icon = "Icon",
-                            Children = [
-                                new Category { Name = "Menu Item 3", Icon = "Icon" },
-                                new Category { Name = "Menu Item 4", Icon = "Icon" }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        },
-        new Category() {
-            Name = "Menu Item 5",
-            Icon = "Icon",
-            Children = [
-                new Category {
-                    Name = "Menu Item 6",
-                    Icon = "Icon",
-                    Children = [
-                        new Category { Name = "Menu Item 7", Icon = "Icon" },
-                        new Category { Name = "Menu Item 8", Icon = "Icon" }
-                    ]
-                }
-            ]
-        },
-        new Category { Name = "Menu Item 9", Icon = "Icon" }
-    ];
+    private DataTemplate MenuItemTemplate => DataTemplate(() => HStack(
+        FontIcon().Glyph("\uE787"),
+        TextBlock().Text().Bind()
+    ).Spacing(24));
 }

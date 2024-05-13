@@ -3,26 +3,24 @@ using Microsoft.UI.Composition.SystemBackdrops;
 using Uno.Resizetizer;
 
 namespace DnkGallery;
-public partial class App : Application
-{
+
+public partial class App : Application {
     /// <summary>
     /// Initializes the singleton application object. This is the first line of authored code
     /// executed, and as such is the logical equivalent of main() or WinMain().
     /// </summary>
-    public App()
-    {
+    public App() {
         this.InitializeComponent();
     }
-
+    
     protected Window? MainWindow { get; private set; }
     protected IHost? Host { get; private set; }
-
-    protected override void OnLaunched(LaunchActivatedEventArgs args)
-    {
+    
+    protected override void OnLaunched(LaunchActivatedEventArgs args) {
         // Load WinUI Resources
         Resources.Build(r => r.Merged(
             new XamlControlsResources()));
-
+        
         // Load Uno.UI.Toolkit Resources
         Resources.Build(r => r.Merged(
             new ToolkitResources()));
@@ -32,18 +30,15 @@ public partial class App : Application
                 // Switch to Development environment when running in DEBUG
                 .UseEnvironment(Environments.Development)
 #endif
-                .UseLogging(configure: (context, logBuilder) =>
-                {
+                .UseLogging(configure: (context, logBuilder) => {
                     // Configure log levels for different categories of logging
                     logBuilder
                         .SetMinimumLevel(
-                            context.HostingEnvironment.IsDevelopment() ?
-                                LogLevel.Information :
-                                LogLevel.Warning)
-
+                            context.HostingEnvironment.IsDevelopment() ? LogLevel.Information : LogLevel.Warning)
+                        
                         // Default filters for core Uno Platform namespaces
                         .CoreLogLevel(LogLevel.Warning);
-
+                    
                     // Uno Platform namespace filter groups
                     // Uncomment individual methods to see more detailed logging
                     //// Generic Xaml events
@@ -60,7 +55,6 @@ public partial class App : Application
                     //logBuilder.HotReloadCoreLogLevel(LogLevel.Information);
                     //// Debug JS interop
                     //logBuilder.WebAssemblyLogLevel(LogLevel.Debug);
-
                 }, enableUnoLogging: true)
                 .UseConfiguration(configure: configBuilder =>
                     configBuilder
@@ -81,29 +75,34 @@ public partial class App : Application
 #endif
                     .AddSingleton<IWeatherCache, WeatherCache>()
                     .AddRefitClient<IApiClient>(context))
-                .ConfigureServices((context, services) =>
-                {
+                .ConfigureServices((context, services) => {
                     //services.AddSingleton<IMyService, MyService>();
                 })
             );
         MainWindow = builder.Window;
-
+        
 #if DEBUG
         MainWindow.EnableHotReload();
 #endif
         MainWindow.SetWindowIcon();
-
+        
         Host = builder.Build();
-#if WINDOWS        
+        
+        MainWindow.Content = new MainPage();
+#if WINDOWS
         // Ensure the current window is active
         MainWindow.ExtendsContentIntoTitleBar = true;
         MainWindow.SystemBackdrop = new MicaBackdrop() {
             Kind = MicaKind.BaseAlt
         };
-#endif        
+        Resources.Build(r => {
+            r.Add("NavigationViewContentMargin", new Thickness(0, 48, 0, 0));
+            r.Add("WindowCaptionBackground", new SolidColorBrush(Colors.Transparent));
+            r.Add("WindowCaptionBackgroundDisabled", new SolidColorBrush(Colors.Transparent));
+        });
+#endif
         // Do not repeat app initialization when the Window already has content,
-        MainWindow.Content = new MainPage();
-
+        
         // Ensure the current window is active
         MainWindow.Activate();
     }
