@@ -1,3 +1,4 @@
+using DnkGallery.Model;
 using DnkGallery.Presentation.Pages;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Uno.Resizetizer;
@@ -76,7 +77,7 @@ public partial class App : Application {
                     .AddSingleton<IWeatherCache, WeatherCache>()
                     .AddRefitClient<IApiClient>(context))
                 .ConfigureServices((context, services) => {
-                    //services.AddSingleton<IMyService, MyService>();
+                    services.AddSingleton<IGalleryService, GalleryService>();
                 })
             );
         MainWindow = builder.Window;
@@ -88,7 +89,7 @@ public partial class App : Application {
         
         Host = builder.Build();
         
-        MainWindow.Content = new MainPage();
+        MainWindow.Content = new MainPage(Host);
 #if WINDOWS
         // Ensure the current window is active
         MainWindow.ExtendsContentIntoTitleBar = true;

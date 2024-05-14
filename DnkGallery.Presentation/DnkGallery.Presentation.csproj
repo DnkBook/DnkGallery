@@ -31,4 +31,8 @@
     <PackageReference Include="CSharpMarkup.WinUI" />
     <PackageReference Include="CSharpMarkup.WinUI.Uno.Extensions.Reactive" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DnkGallery.Model\DnkGallery.Model.csproj" />
+  </ItemGroup>
 </Project>
