@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using DataTemplate = CSharpMarkup.WinUI.DataTemplate;
 
 namespace DnkGallery.Presentation.Pages;
@@ -21,11 +20,13 @@ partial class MainPage {
     
     public void BuildUI() => Content(Grid(AppTitleBar("DnkGallery"),
         NavigationView(
-                Frame().Invoke(frame=> vm.Frame = frame)
+                Frame().Assign(out frame)
                 )
-            .MenuItemsSource()
-            .Bind(vm?.NavigationViewItems)
-            .MenuItemTemplate(MenuItemTemplate)
+            .Assign(out navigationView)
+            .Invoke(NavigationInvoke)
+            // .MenuItemsSource()
+            // .Bind(vm?.MenuItems)
+            // .MenuItemTemplate(MenuItemTemplate)
             
         )
     );
@@ -33,6 +34,10 @@ partial class MainPage {
     
     
     private DataTemplate MenuItemTemplate => DataTemplate(
-        () => NavigationViewItem().Content().Bind("Name").Icon().Bind("Icon").MenuItemsSource().Bind("Children")
+        () => NavigationViewItem()
+            .Content().Bind("Name")
+            .Icon().Bind("Icon")
+            .MenuItemsSource().Bind("Children")
+            .Tag().Bind("Name")
         );
 }
