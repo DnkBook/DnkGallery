@@ -1,8 +1,5 @@
 ﻿global using System.Collections.Immutable;
-global using DnkGallery.DataContracts;
-global using DnkGallery.DataContracts.Serialization;
 global using DnkGallery.Models;
-global using DnkGallery.Services.Caching;
 global using DnkGallery.Services.Endpoints;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Hosting;
