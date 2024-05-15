@@ -68,6 +68,7 @@ public partial class App : Application {
                 .UseSerialization((context, services) => services
                     .AddContentSerializer(context))
                 .ConfigureServices((context, services) => {
+                    services.AddSingleton<Setting>();
                     services.AddSingleton<IGalleryService, GalleryService>();
                 })
             );
@@ -80,7 +81,7 @@ public partial class App : Application {
         
         Host = builder.Build();
         
-        MainWindow.Content = new MainPage(Host);
+        MainWindow.Content = new MainPage(MainWindow, Host);
 #if WINDOWS
         // Ensure the current window is active
         MainWindow.ExtendsContentIntoTitleBar = true;

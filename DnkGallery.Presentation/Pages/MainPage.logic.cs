@@ -1,6 +1,7 @@
 ﻿using DnkGallery.Model;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.UI.Xaml;
 using Uno.Extensions;
 
 namespace DnkGallery.Presentation.Pages;
@@ -10,9 +11,18 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
     private UIControls.Frame? frame;
     private UIControls.NavigationView? navigationView;
     
-    public MainPage(IHost host) {
+    public MainPage(Window window, IHost host) {
         BuildUI();
         Host = host;
+        Ioc.Service = host.Services;
+        var setting = Ioc.Service.GetService<Setting>();
+        setting?.Load();
+        if (setting != null) {
+            setting.SettingChanged += (_, _) => {
+                DispatcherQueue.TryEnqueue(async () => await LoadNavigation());
+            };
+        }
+        MainWindow = window;
     }
     
     private async Task SetNavigationMenuItems(IList<object> menuItems, IEnumerable<Chapter> chapters) {
@@ -42,6 +52,16 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
         menuItems.AddRange(childrenList);
     }
     
+    private async Task LoadNavigation() {
+        var galleryService = Service.GetService<IGalleryService>();
+        var chapters = await galleryService.Chapters(Service.GetService<Setting>().SourcePath);
+        navigationView.MenuItems.Clear();
+        await SetNavigationMenuItems(navigationView.MenuItems, chapters);
+        
+        if (navigationView.MenuItems.Count > 0)
+            navigationView.SelectedItem = navigationView.MenuItems[0];
+    }
+    
     private void NavigationInvoke(UIControls.NavigationView _) {
         navigationView.Expanding += async (sender, args) => {
             var navigationViewItem = args.ExpandingItem as UIControls.NavigationViewItem;
@@ -54,18 +74,17 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
         };
         
         navigationView.Loaded += async (sender, args) => {
-            var galleryService = Service.GetService<IGalleryService>();
-            var chapters = await galleryService.Chapters(".");
-            await SetNavigationMenuItems(navigationView.MenuItems, chapters);
-            
-            frame.Navigate(typeof(HelloPage));
+            await LoadNavigation();
         };
+        
         
         navigationView.ItemInvoked += (sender, args) => {
             if (args.IsSettingsInvoked) {
-                frame.Navigate(typeof(SettingsPage), args.RecommendedNavigationTransitionInfo);
+                navigationView.Header = "设置";
+                frame.Navigate(typeof(SettingPage), null, args.RecommendedNavigationTransitionInfo);
             } else if (args.InvokedItemContainer != null) {
                 var navigationTag = args.InvokedItemContainer.Tag as NavigationTag;
+                navigationView.Header = (navigationTag.Parameter as Chapter)?.Name;
                 frame.Navigate(navigationTag.Page,
                     navigationTag.Parameter,
                     args.RecommendedNavigationTransitionInfo);
@@ -74,9 +93,11 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
         
         navigationView.SelectionChanged += (sender, args) => {
             if (args.IsSettingsSelected) {
-                frame.Navigate(typeof(SettingsPage), args.RecommendedNavigationTransitionInfo);
+                navigationView.Header = "设置";
+                frame.Navigate(typeof(SettingPage), null, args.RecommendedNavigationTransitionInfo);
             } else if (args.SelectedItemContainer != null) {
                 var navigationTag = args.SelectedItemContainer.Tag as NavigationTag;
+                navigationView.Header = (navigationTag.Parameter as Chapter)?.Name;
                 frame.Navigate(navigationTag.Page,
                     navigationTag.Parameter,
                     args.RecommendedNavigationTransitionInfo);
@@ -88,10 +109,4 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
 public record NavigationTag(Type Page, object Parameter);
 
 public partial record MainViewModel : BaseViewModel {
-}
-
-public class Category {
-    public string Name { get; set; }
-    public IconElement Icon { get; set; }
-    public ObservableCollection<Category> Children { get; set; }
 }
