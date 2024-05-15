@@ -68,6 +68,7 @@ public partial class App : Application {
                 .UseSerialization((context, services) => services
                     .AddContentSerializer(context))
                 .ConfigureServices((context, services) => {
+                    services.AddSingleton<Setting>();
                     services.AddSingleton<IGalleryService, GalleryService>();
                 })
             );

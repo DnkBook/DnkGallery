@@ -7,11 +7,7 @@ namespace DnkGallery.Presentation.Pages;
 public partial class GalleryPage {
     public void BuildUI() => Content(Grid(Columns(Star, Auto),
         GridView()
-            // .ItemsSource().Bind(vm?.Anas,BindingMode.TwoWay)
             .Assign(out itemsView)
-        // AnnotatedScrollBar()
-        //     .Assign(out scrollBar)
-        //     .Margin(4, 0, 48, 0).HorizontalAlignment(HorizontalAlignment.Right).Grid_Column(1)
         )
     ).Invoke(ContentInvoke);
         

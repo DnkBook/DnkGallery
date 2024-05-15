@@ -5,7 +5,7 @@ using Microsoft.UI.Xaml.Navigation;
 namespace DnkGallery.Presentation.Core;
 
 public abstract partial class BasePage<TViewModel> : BasePage where TViewModel : class, new() {
-    protected BasePage() => DataContext = new TViewModel();
+    protected BasePage() => DataContext = new TViewModel ();
     protected TViewModel? vm => DataContext as TViewModel;
 }
 
@@ -20,7 +20,7 @@ public abstract partial class BasePage : UIControls.Page {
 #endif
     
     protected IServiceProvider Service => Host.Services;
-
+    
     protected static IHost? Host { get; set; }
     
     protected static Window MainWindow { get; set; }
