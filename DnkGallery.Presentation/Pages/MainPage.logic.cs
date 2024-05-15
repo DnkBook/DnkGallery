@@ -1,6 +1,7 @@
 ﻿using DnkGallery.Model;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.UI.Xaml;
 using Uno.Extensions;
 
 namespace DnkGallery.Presentation.Pages;
@@ -10,9 +11,10 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
     private UIControls.Frame? frame;
     private UIControls.NavigationView? navigationView;
     
-    public MainPage(IHost host) {
+    public MainPage(Window window, IHost host) {
         BuildUI();
         Host = host;
+        MainWindow = window;
     }
     
     private async Task SetNavigationMenuItems(IList<object> menuItems, IEnumerable<Chapter> chapters) {
@@ -55,7 +57,7 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
         
         navigationView.Loaded += async (sender, args) => {
             var galleryService = Service.GetService<IGalleryService>();
-            var chapters = await galleryService.Chapters(".");
+            var chapters = await galleryService.Chapters("C:\\Users\\NianChen\\Pictures\\dnk\\dnkFuns\\dnkBook");
             await SetNavigationMenuItems(navigationView.MenuItems, chapters);
             
             frame.Navigate(typeof(HelloPage));
@@ -88,10 +90,4 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
 public record NavigationTag(Type Page, object Parameter);
 
 public partial record MainViewModel : BaseViewModel {
-}
-
-public class Category {
-    public string Name { get; set; }
-    public IconElement Icon { get; set; }
-    public ObservableCollection<Category> Children { get; set; }
 }
