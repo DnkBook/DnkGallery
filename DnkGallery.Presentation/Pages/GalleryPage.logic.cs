@@ -14,7 +14,6 @@ namespace DnkGallery.Presentation.Pages;
 [UIBindable]
 public sealed partial class GalleryPage : BasePage<GalleryViewModel>, IBuildUI {
     private UIControls.GridView itemsView;
-    private UIControls.AnnotatedScrollBar? scrollBar;
     
     // private UIControls.AnnotatedScrollBar? scrollBar;
     private Chapter chapter;
