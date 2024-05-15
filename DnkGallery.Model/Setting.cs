@@ -7,8 +7,8 @@ public enum Source {
 }
 
 public sealed record Setting {
-    public Source Source { get; set; }
-    public string SourcePath { get; set; }
+    public Source Source { get; set; } = Source.Local;
+    public string SourcePath { get; set; } = ".";
     
     private string GetSettingPath() {
         var folderPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -18,6 +18,9 @@ public sealed record Setting {
     
     public void Load() {
         var settingPath = GetSettingPath();
+        if (!File.Exists(settingPath)) {
+            Save(this).Wait();
+        }
         var text = File.ReadAllText(settingPath);
         var deserialize = JsonSerializer.Deserialize<Setting>(text);
         Source = deserialize.Source;
