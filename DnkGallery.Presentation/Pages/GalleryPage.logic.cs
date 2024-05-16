@@ -19,7 +19,7 @@ namespace DnkGallery.Presentation.Pages;
 
 [UIBindable]
 public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IBuildUI {
-    private UIControls.GridView itemsView;
+    private UIControls.GridView gridView;
     private UIControls.ContentDialog saveDialog;
     
     public GalleryPage() {
@@ -32,6 +32,12 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
             RegisterAccelerator();
         };
     }
+    
+    private void GridViewItemInvoke(UIControls.Grid obj) {
+        obj.DoubleTapped += (sender, args) => {
+            Frame.Navigate(typeof(AnaViewerPage), obj.DataContext as Ana);
+        };
+    }
     /// <summary>
     /// 订阅快捷键事件
     /// </summary>
@@ -41,14 +47,14 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
             Modifiers = VirtualKeyModifiers.Control
         };
         copyAccelerator.Invoked += CopyInvoke;
-        itemsView.KeyboardAccelerators.Add(copyAccelerator);
+        gridView.KeyboardAccelerators.Add(copyAccelerator);
         
         var pasteAccelerator = new KeyboardAccelerator {
             Key = VirtualKey.V,
             Modifiers = VirtualKeyModifiers.Control
         };
         pasteAccelerator.Invoked += PasteInvoke;
-        itemsView.KeyboardAccelerators
+        gridView.KeyboardAccelerators
             .Add(pasteAccelerator);
     }
     
@@ -64,7 +70,7 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
     /// <param name="sender"></param>
     /// <param name="args"></param>
     private async void CopyInvoke(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
-        if (itemsView.SelectedItem is not Ana itemsViewSelectedItem)
+        if (gridView.SelectedItem is not Ana itemsViewSelectedItem)
             return;
         var dataPackage = new DataPackage();
         var randomAccessStream =
@@ -117,7 +123,7 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
 }
 
 public record SaveAnaData {
-    public Stream Stream { get; init; }
+    public Stream Stream { get; init; } 
     public int PixelWidth { get; init; }
     public int PixelHeight { get; init; }
     public BitmapImage Image { get; init; }

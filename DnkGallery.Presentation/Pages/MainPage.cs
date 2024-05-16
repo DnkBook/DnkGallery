@@ -20,8 +20,9 @@ partial class MainPage {
     
     public void BuildUI() => Content(Grid(AppTitleBar("DnkGallery"),
         NavigationView(
-                Frame().Assign(out frame)
+                Frame().Assign(out frame).Invoke(FrameInvoke)
                 )
+                .IsBackEnabled(true)
             .Assign(out navigationView)
             .Invoke(NavigationInvoke)
             // .MenuItemsSource()
