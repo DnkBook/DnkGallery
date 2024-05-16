@@ -49,13 +49,13 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
             return children;
         });
         var childrenList = await Task.WhenAll(childrenTasks);
+        menuItems.Clear();
         menuItems.AddRange(childrenList);
     }
     
     private async Task LoadNavigation() {
         var galleryService = Service.GetService<IGalleryService>();
         var chapters = await galleryService.Chapters(Service.GetService<Setting>().SourcePath);
-        navigationView.MenuItems.Clear();
         await SetNavigationMenuItems(navigationView.MenuItems, chapters);
         
         if (navigationView.MenuItems.Count > 0)
