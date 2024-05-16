@@ -30,6 +30,7 @@
   <ItemGroup>
     <PackageReference Include="CSharpMarkup.WinUI" />
     <PackageReference Include="CSharpMarkup.WinUI.Uno.Extensions.Reactive" />
+    <PackageReference Include="CSharpMarkup.WinUI.Uno.Toolkit" />
   </ItemGroup>
 
   <ItemGroup>
