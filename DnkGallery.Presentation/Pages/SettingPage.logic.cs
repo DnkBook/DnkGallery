@@ -14,7 +14,7 @@ public partial record SettingViewModel : BaseViewModel {
     
     public async Task Save() {
         var setting = await Setting;
-        await Service.GetService<Setting>().Save(setting);
+        await Service.GetService<Setting>().SaveAsync(setting);
     }
     public async Task Cancel() {
         
