@@ -10,18 +10,19 @@ public partial class GalleryPage {
             Columns(Star, Auto),
             GridView()
                 .ItemsSource().Bind(vm?.Anas)
+                .ItemTemplate(ItemViewTemplate)
                 .Assign(out itemsView),
             ContentDialog(
                 VStack(
                     Image()
                         .Height(300).Width(400)
                         .Source().Bind(vm?.SaveData?.Image),
-                        TextBlock().Bind(vm.Chapter.Dir,convert:(string source) => $"保存路径：{source}"),
+                        TextBlock().Bind(vm?.Chapter?.Dir,convert:(string source) => $"保存路径：{source}"),
                         TextBox().Header("文件名").Bind(vm?.SaveData?.FileName),
-                        CheckBox("添加到git")
+                        CheckBox("添加到Git")
                     ).Spacing(24)
                 )
-                // .XamlRoot(MainWindow.Content.XamlRoot)
+                .XamlRoot(MainWindow.Content.XamlRoot)
                 .Title().Bind(vm?.Chapter?.Name, convert:(string title) => $"保存到 {title}")
                 .PrimaryButtonText("保存")
                 .PrimaryButtonCommand().Bind(vm?.Save)
