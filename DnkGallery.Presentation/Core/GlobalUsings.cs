@@ -14,6 +14,7 @@ global using DnkGallery.Presentation.Core;
 global using Uno.Extensions.Reactive;
 
 // Markup helpers:
+global using static CSharpMarkup.WinUI.Uno.Toolkit.Helpers;
 global using static CSharpMarkup.WinUI.Helpers;
 global using static DnkGallery.Presentation.Core.MarkupHelpers;
 

@@ -14,7 +14,7 @@ public sealed record Setting {
     
     private string GetSettingPath() {
         var folderPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        var combine = Path.Combine(folderPath,"dnkgallery_setting.json");
+        var combine = Path.Combine(folderPath, "dnkgallery_setting.json");
         return combine;
     }
     
@@ -22,7 +22,7 @@ public sealed record Setting {
         var settingPath = GetSettingPath();
         if (!File.Exists(settingPath)) {
             var serialize = JsonSerializer.Serialize(this, jsonSerializerOptions);
-            File.WriteAllText(settingPath,serialize);
+            File.WriteAllText(settingPath, serialize);
         }
         var text = File.ReadAllText(settingPath);
         var deserialize = JsonSerializer.Deserialize<Setting>(text);
@@ -34,7 +34,7 @@ public sealed record Setting {
     public async Task SaveAsync(Setting? setting) {
         Update(setting);
         var serialize = JsonSerializer.Serialize(this, jsonSerializerOptions);
-        await File.WriteAllTextAsync(GetSettingPath(),serialize);
+        await File.WriteAllTextAsync(GetSettingPath(), serialize);
         
         SettingChanged?.Invoke(this, this);
     }

@@ -1,23 +1,36 @@
 using DnkGallery.Model;
+using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
+using UIElement = Microsoft.UI.Xaml.UIElement;
+
 namespace DnkGallery.Presentation.Pages;
 
 public partial class SettingPage {
     public void BuildUI() => Content(
         VStack(
-            ComboBox()
-                .Header("语录册源")
-                .ItemsSource(Enum.GetValues(typeof(Source)))
-                .SelectedItem()
-                .Bind(vm?.Setting?.Source,BindingMode.TwoWay),
-            TextBox()
-                .Header("地址")
-                .Text().Bind(vm?.Setting?.SourcePath,BindingMode.TwoWay)
-                .HorizontalAlignment(HorizontalAlignment.Left).MaxWidth(500),
-            HStack(
-                Button("保存").BindCommand(vm?.Save),
-                Button("取消").BindCommand(vm?.Cancel)
-            ).Spacing(24)
-        ).Margin(24).Spacing(24)
+            TextBlock("基本设置")
+                .FontWeight(FontWeights.Bold),
+             VStack(
+                 BaiscSettingItems()
+             ).Spacing(2).HorizontalAlignment(HorizontalAlignment.Stretch)
+            
+        ).Margin(24).Spacing(12)
     );
+    
+    private UIElement[] BaiscSettingItems() => [
+        SettingsExpander([
+                SettingsExpanderContent(TextBlock("源类型"), 
+                    ComboBox()
+                    .ItemsSource(Enum.GetValues(typeof(Source)))
+                    .Width(300)
+                    .SelectedItem()
+                    .Bind(vm?.Setting?.Source, BindingMode.TwoWay)),
+                SettingsExpanderContent(TextBlock("源地址"), 
+                    TextBox()
+                        .MaxWidth(300)
+                    .Text().Bind(vm?.Setting?.SourcePath, BindingMode.TwoWay))
+            ], SymbolIcon(UIControls.Symbol.Folder),
+            "语录册源",
+            "使用本地源或者从Git上获取")
+    ];
 }
