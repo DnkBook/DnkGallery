@@ -35,7 +35,7 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
     
     private void GridViewItemInvoke(UIControls.Grid obj) {
         obj.DoubleTapped += (sender, args) => {
-            Frame.Navigate(typeof(AnaViewerPage), obj.DataContext as Ana);
+            // Frame.Navigate(typeof(AnaViewerPage), obj.DataContext as Ana);
         };
     }
     /// <summary>
@@ -59,8 +59,8 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
     }
     
     protected override async void OnNavigatedTo(NavigationEventArgs e) {
-        var chapter = e.Parameter as Chapter;
-        await vm.Model.Chapter.Update(_ => chapter, CancellationToken.None);
+        var parameter = e.Parameter as NavigationParameter<Chapter>;
+        await vm.Model.Chapter.Update(_ => parameter.Payload, CancellationToken.None);
         await vm.Model.LoadAnas();
         base.OnNavigatedTo(e);
     }
@@ -133,7 +133,7 @@ public record SaveAnaData {
 public partial record GalleryViewModel : BaseViewModel {
     
     public IState<ObservableCollection<Ana>> Anas => UseState(() => new ObservableCollection<Ana>());
-    public IState<Chapter> Chapter => UseState(() => new Chapter(default, default, default));
+    public IState<Chapter> Chapter => UseState(() => new Chapter(default, default, default,default));
     
     public IState<SaveAnaData> SaveData => UseState(() => new SaveAnaData());
     
