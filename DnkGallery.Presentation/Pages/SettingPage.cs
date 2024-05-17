@@ -6,6 +6,7 @@ using UIElement = Microsoft.UI.Xaml.UIElement;
 namespace DnkGallery.Presentation.Pages;
 
 public partial class SettingPage {
+    public static readonly string Header = "设置";
     public void BuildUI() => Content(
         VStack(
             TextBlock("基本设置")

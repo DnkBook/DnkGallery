@@ -5,13 +5,14 @@ using DataTemplate = Microsoft.UI.Xaml.DataTemplate;
 namespace DnkGallery.Presentation.Pages;
 
 public partial class GalleryPage {
-    public void BuildUI() => Content(
+    public void BuildUI() => 
+        Content(
         Grid(
             Columns(Star, Auto),
             GridView()
                 .ItemsSource().Bind(vm?.Anas)
-                .ItemTemplate(ItemViewTemplate)
-                .Assign(out itemsView),
+                .ItemTemplate(GridViewTemplate)
+                .Assign(out gridView),
             ContentDialog(
                 VStack(
                     Image()
@@ -32,10 +33,10 @@ public partial class GalleryPage {
         )
     ).Invoke(ContentInvoke);
     
-    private DataTemplate ItemViewTemplate => DataTemplate(() =>
+    private DataTemplate GridViewTemplate => DataTemplate(() =>
         Grid(
             Image().Source().Bind("Path")
-                .Stretch(Stretch.UniformToFill).HCenter().VCenter().MinWidth(100),
+                .Stretch(Stretch.UniformToFill).HCenter().VCenter(),
             VStack(
                     TextBlock()
                         .Text().Bind("Name").HCenter().VCenter().FontSize(16)
@@ -45,6 +46,6 @@ public partial class GalleryPage {
                 .Width(300)
                 .Background(ThemeResource.AcrylicBackgroundFillColorDefaultBrush)
                 .Opacity(0.75)
-        ).Width(300).Height(200)
+        ).Width(300).Height(200).Invoke(GridViewItemInvoke)
     );
 }
