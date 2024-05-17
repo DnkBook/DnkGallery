@@ -11,6 +11,7 @@ global using global::System.Threading.Tasks;
 // Markup extension methods:
 global using CSharpMarkup.WinUI;
 global using DnkGallery.Presentation.Core;
+global using DnkGallery.Presentation.Utils;
 global using Uno.Extensions.Reactive;
 
 // Markup helpers:

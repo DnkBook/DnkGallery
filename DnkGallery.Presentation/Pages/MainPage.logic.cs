@@ -2,9 +2,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
-using Uno.Extensions;
-using FrameworkElement = Microsoft.UI.Xaml.FrameworkElement;
-using NavigationTransitionInfo = Microsoft.UI.Xaml.Media.Animation.NavigationTransitionInfo;
 
 namespace DnkGallery.Presentation.Pages;
 
@@ -26,65 +23,73 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
         MainWindow = window;
     }
     
-    private static UIControls.NavigationViewItem CreateChapterNavigationViewItem(Chapter chapter) =>
-        NavigationUtil.CreateNavigationViewItem(
-            chapter.Name,
-            typeof(GalleryPage),
-            chapter,
-            chapter.Anchors
-        );
-    
-    private async Task SetChapterNavigationMenuItems(IList<object> menuItems, IEnumerable<Chapter> chapters,
-        UIControls.NavigationViewItem? navigationViewItem = default) {
-        var navigationTag = navigationViewItem?.Tag as NavigationTag<Chapter>;
-        var parentAnchors = navigationTag?.Parameter.Anchors;
-        
-        var galleryService = Service.GetService<IGalleryService>();
-        var childrenTasks = chapters.Select(async chapter => {
-            chapter.Anchors = [..parentAnchors ?? [], ..chapter.Anchors];
-            var children = CreateChapterNavigationViewItem(chapter);
-            if (!chapter.HasChildren)
-                return children;
-            
-            var list = await galleryService.Chapters(chapter.Dir);
-            var navigationViewItems = list.Select(CreateChapterNavigationViewItem).ToList();
-            children.MenuItems.AddRange(navigationViewItems);
-            
-            return children;
-        });
-        var childrenList = await Task.WhenAll(childrenTasks);
-        menuItems.Clear();
-        menuItems.AddRange(childrenList);
-    }
-    
     private async Task LoadNavigation() {
-        var galleryService = Service.GetService<IGalleryService>();
-        var chapters = await galleryService.Chapters(Service.GetService<Setting>().SourcePath);
-        await SetChapterNavigationMenuItems(navigationView.MenuItems, chapters);
+        var galleryService = Service.GetService<IGalleryService>()!;
+        var chapters = await galleryService.Chapters(Service.GetService<Setting>()!.SourcePath);
+        var navigationItemModels = chapters.Select(CreateChapterNavigationItemModel);
         
-        if (navigationView.MenuItems.Count > 0) {
-            var navigationViewMenuItem = navigationView.MenuItems[0] as UIControls.NavigationViewItem;
-            Navigate<Chapter>(navigationViewMenuItem);
+        navigationView.MenuItems.Clear();
+        await Navigater.AddNavigationMenuItems(navigationItemModels,
+            model => model.Payload.HasChildren,
+            async model => {
+                var payloadDir = model.Payload.Dir;
+                var list = await galleryService.Chapters(payloadDir);
+                var itemModels = list.Select(CreateChapterNavigationItemModel);
+                return itemModels;
+            });
+        
+        // 默认导航到第一个菜单
+        if (navigationView.MenuItems is { Count: > 0 } && navigationView.MenuItems[0] is UIControls.NavigationViewItem navigationViewMenuItem) {
+            Navigater.Navigate<Chapter>(navigationViewMenuItem);
         }
     }
     
     private void FrameInvoke(UIControls.Frame _) {
-        frame.Navigated += (sender, args) => {
+        frame.Navigated += (_, _) => {
             navigationView.IsBackButtonVisible = frame.CanGoBack
                 ? UIControls.NavigationViewBackButtonVisible.Visible
                 : UIControls.NavigationViewBackButtonVisible.Collapsed;
         };
     }
     
+    private static NavigationItemModel<Chapter> CreateChapterNavigationItemModel(Chapter chapter) =>
+        new() {
+            Name = chapter.Name,
+            Content = chapter.Name,
+            Header = chapter.Name,
+            Page = typeof(GalleryPage),
+            Anchors = chapter.Anchors,
+            Icon = UIControls.Symbol.Calendar,
+            Payload = chapter
+        };
+    
     private void NavigationInvoke(UIControls.NavigationView _) {
+        
+        Navigater.Init(navigationView, frame);
+        
+        navigationView.Loaded += async (sender, args) => {
+            await LoadNavigation();
+        };
+        
         navigationView.Expanding += async (sender, args) => {
             var navigationViewItem = args.ExpandingItem as UIControls.NavigationViewItem;
-            var navigationTag = navigationViewItem.Tag as NavigationTag<Chapter>;
-            var parameter = navigationTag.Parameter;
-            var galleryService = Service.GetService<IGalleryService>();
-            var chapters = await galleryService.Chapters(parameter.Payload.Dir);
-            
-            await SetChapterNavigationMenuItems(navigationViewItem.MenuItems, chapters, navigationViewItem);
+            if (navigationViewItem?.Tag is NavigationTag<Chapter> { Parameter.Payload.Dir: not null } navigationTag) {  
+                var galleryService = Service.GetService<IGalleryService>()!;
+                var chapters = await galleryService.Chapters(navigationTag.Parameter.Payload.Dir);
+                
+                var navigationItemModels = chapters.Select(CreateChapterNavigationItemModel);
+                navigationViewItem.MenuItems.Clear();
+                await Navigater.AddNavigationMenuItems(navigationItemModels,
+                    model => model.Payload.HasChildren,
+                    async model => {
+                        var payloadDir = model.Payload.Dir;
+                        var list = await galleryService.Chapters(payloadDir);
+                        var itemModels = list.Select(CreateChapterNavigationItemModel);
+                        return itemModels;
+                    }, navigationViewItem);
+            }else{
+                // 补充其它的展开策略
+            }
         };
         
         navigationView.BackRequested += (sender, args) => {
@@ -95,67 +100,41 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
             }
         };
         
-        navigationView.Loaded += async (sender, args) => { await LoadNavigation(); };
-        
         navigationView.ItemInvoked += (sender, args) => {
-            if (args.IsSettingsInvoked) {
-                frame.Navigate(typeof(SettingPage), null, args.RecommendedNavigationTransitionInfo);
-            } else if (args.InvokedItemContainer is UIControls.NavigationViewItem invokedItemContainer) {
-                Navigate<Chapter>(invokedItemContainer, args.RecommendedNavigationTransitionInfo);
+            // 防止重复点击
+            if (args.InvokedItemContainer is UIControls.NavigationViewItem invokedItemContainer && Navigater.IsCurrentPage(invokedItemContainer)) {
+                return;
             }
+            //设置导航写死了
+            if (args.IsSettingsInvoked) {
+                Navigater.Navigate(SettingPage.Header, typeof(SettingPage), SettingPage.Header, args.RecommendedNavigationTransitionInfo);
+            } else switch (args.InvokedItemContainer) {
+                    case UIControls.NavigationViewItem { Tag: NavigationTag<Chapter> } chapterNavigationViewItem:
+                        Navigater.Navigate<Chapter>(chapterNavigationViewItem, args.RecommendedNavigationTransitionInfo);
+                        break;
+                    case UIControls.NavigationViewItem navigationViewItem:
+                        Navigater.Navigate<object>(navigationViewItem, args.RecommendedNavigationTransitionInfo);
+                        break;
+                }
         };
         
-        
-        // navigationView.SelectionChanged += (sender, args) => {
-        //     if (args.IsSettingsSelected) {
-        //         navigationView.Header = "设置";
-        //         frame?.Navigate(typeof(SettingPage), null, args.RecommendedNavigationTransitionInfo);
-        //     } else if (args.SelectedItemContainer != null) {
-        //         var navigationTag = args.SelectedItemContainer.Tag as NavigationTag;
-        //         navigationView.Header = (navigationTag.Parameter as Chapter)?.Name;
-        //         frame?.Navigate(navigationTag.Page,
-        //             navigationTag.Parameter,
-        //             args.RecommendedNavigationTransitionInfo);
-        //     }
-        //     Debug.WriteLine(frame.BackStackDepth);
-        // };
     }
     
-    private void Navigate<TParameter>(FrameworkElement navigationViewItem, NavigationTransitionInfo? args = default) {
-        var navigationTag = navigationViewItem.Tag as NavigationTag<TParameter>;
-        navigationView.Header = navigationTag.Header;
-        navigationView.SelectedItem = navigationViewItem;
-        frame.Navigate(navigationTag.Page, navigationTag.Parameter, args);
-    }
-    
+    /// <summary>
+    /// 页面回退，有点神金
+    /// </summary>
     private void Back() {
         var pageStackEntry = frame.BackStack[^1];
-        
         if (pageStackEntry.SourcePageType == typeof(SettingPage)) {
+            navigationView.Header = SettingPage.Header;
             navigationView.SelectedItem = navigationView.SettingsItem;
-        } else if (pageStackEntry.SourcePageType == typeof(GalleryPage)) {
-            // 树形结构已解决 解决方案：在Parameter添加新字段Anchors格式为数组[2024,05,17]查找时遍历
-            navigationView.SelectedItem =
-                NavigationUtil.FindNavigationViewItem<Chapter>(navigationView, pageStackEntry);
-        } else {
-            navigationView.SelectedItem = navigationView.MenuItems
-                .First(x => {
-                    var navigationTag = (x as UIControls.NavigationViewItem)?.Tag as NavigationTag;
-                    var page = navigationTag?.Page == pageStackEntry.SourcePageType;
-                    return page;
-                });
+            frame.GoBack();
+        }else {
+            Navigater.Back(pageStackEntry);
         }
-        frame.GoBack();
+
     }
 }
-
-public record NavigationTag(Type Page, string Header, NavigationParameter Parameter);
-
-public record NavigationParameter(string Name, string[] Anchors);
-
-public record NavigationTag<T>(Type Page, string Header, NavigationParameter<T> Parameter);
-
-public record NavigationParameter<T>(string Name, string[] Anchors, T? Payload);
 
 public partial record MainViewModel : BaseViewModel {
 }
