@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
 using Uno.Extensions;
+using FrameworkElement = Microsoft.UI.Xaml.FrameworkElement;
 using NavigationTransitionInfo = Microsoft.UI.Xaml.Media.Animation.NavigationTransitionInfo;
 
 namespace DnkGallery.Presentation.Pages;
@@ -19,32 +20,34 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
         var setting = Ioc.Service.GetService<Setting>();
         setting?.Load();
         if (setting != null) {
-            setting.SettingChanged += (_, _) => {
-                DispatcherQueue.TryEnqueue(async () => await LoadNavigation());
-            };
+            setting.SettingChanged += (_, _) => { DispatcherQueue.TryEnqueue(async () => await LoadNavigation()); };
         }
+        
         MainWindow = window;
     }
     
-    private async Task SetNavigationMenuItems(IList<object> menuItems, IEnumerable<Chapter> chapters) {
-        var galleryService = Service.GetService<IGalleryService>();
+    private static UIControls.NavigationViewItem CreateChapterNavigationViewItem(Chapter chapter) =>
+        NavigationUtil.CreateNavigationViewItem(
+            chapter.Name,
+            typeof(GalleryPage),
+            chapter,
+            chapter.Anchors
+        );
+    
+    private async Task SetChapterNavigationMenuItems(IList<object> menuItems, IEnumerable<Chapter> chapters,
+        UIControls.NavigationViewItem? navigationViewItem = default) {
+        var navigationTag = navigationViewItem?.Tag as NavigationTag<Chapter>;
+        var parentAnchors = navigationTag?.Parameter.Anchors;
         
+        var galleryService = Service.GetService<IGalleryService>();
         var childrenTasks = chapters.Select(async chapter => {
-            var children = new UIControls.NavigationViewItem {
-                Content = chapter.Name,
-                Icon = new UIControls.SymbolIcon(UIControls.Symbol.Calendar),
-                Tag = new NavigationTag(typeof(GalleryPage), chapter),
-            };
-            if (!chapter.HasChildren) {
+            chapter.Anchors = [..parentAnchors ?? [], ..chapter.Anchors];
+            var children = CreateChapterNavigationViewItem(chapter);
+            if (!chapter.HasChildren)
                 return children;
-            }
             
             var list = await galleryService.Chapters(chapter.Dir);
-            var navigationViewItems = list.Select(x => new UIControls.NavigationViewItem {
-                Content = x.Name,
-                Icon = new UIControls.SymbolIcon(UIControls.Symbol.Calendar),
-                Tag = new NavigationTag(typeof(GalleryPage), x)
-            }).ToList();
+            var navigationViewItems = list.Select(CreateChapterNavigationViewItem).ToList();
             children.MenuItems.AddRange(navigationViewItems);
             
             return children;
@@ -57,20 +60,18 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
     private async Task LoadNavigation() {
         var galleryService = Service.GetService<IGalleryService>();
         var chapters = await galleryService.Chapters(Service.GetService<Setting>().SourcePath);
-        await SetNavigationMenuItems(navigationView.MenuItems, chapters);
+        await SetChapterNavigationMenuItems(navigationView.MenuItems, chapters);
         
         if (navigationView.MenuItems.Count > 0) {
             var navigationViewMenuItem = navigationView.MenuItems[0] as UIControls.NavigationViewItem;
-            Navigate(navigationViewMenuItem);
-            navigationView.SelectedItem = navigationViewMenuItem;
+            Navigate<Chapter>(navigationViewMenuItem);
         }
-            
-        
     }
+    
     private void FrameInvoke(UIControls.Frame _) {
         frame.Navigated += (sender, args) => {
-            navigationView.IsBackButtonVisible = frame.CanGoBack 
-                ? UIControls.NavigationViewBackButtonVisible.Visible 
+            navigationView.IsBackButtonVisible = frame.CanGoBack
+                ? UIControls.NavigationViewBackButtonVisible.Visible
                 : UIControls.NavigationViewBackButtonVisible.Collapsed;
         };
     }
@@ -78,12 +79,12 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
     private void NavigationInvoke(UIControls.NavigationView _) {
         navigationView.Expanding += async (sender, args) => {
             var navigationViewItem = args.ExpandingItem as UIControls.NavigationViewItem;
-            var navigationTag = navigationViewItem.Tag as NavigationTag;
-            var chapter = navigationTag.Parameter as Chapter;
+            var navigationTag = navigationViewItem.Tag as NavigationTag<Chapter>;
+            var parameter = navigationTag.Parameter;
             var galleryService = Service.GetService<IGalleryService>();
-            var chapters = await galleryService.Chapters(chapter.Dir);
+            var chapters = await galleryService.Chapters(parameter.Payload.Dir);
             
-            await SetNavigationMenuItems(navigationViewItem.MenuItems, chapters);
+            await SetChapterNavigationMenuItems(navigationViewItem.MenuItems, chapters, navigationViewItem);
         };
         
         navigationView.BackRequested += (sender, args) => {
@@ -94,15 +95,13 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
             }
         };
         
-        navigationView.Loaded += async (sender, args) => {
-            await LoadNavigation();
-        };
+        navigationView.Loaded += async (sender, args) => { await LoadNavigation(); };
         
         navigationView.ItemInvoked += (sender, args) => {
             if (args.IsSettingsInvoked) {
-                frame?.Navigate(typeof(SettingPage),null, args.RecommendedNavigationTransitionInfo);
+                frame.Navigate(typeof(SettingPage), null, args.RecommendedNavigationTransitionInfo);
             } else if (args.InvokedItemContainer is UIControls.NavigationViewItem invokedItemContainer) {
-                Navigate(invokedItemContainer,args.RecommendedNavigationTransitionInfo);
+                Navigate<Chapter>(invokedItemContainer, args.RecommendedNavigationTransitionInfo);
             }
         };
         
@@ -122,25 +121,22 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
         // };
     }
     
-    private void Navigate(UIControls.NavigationViewItem navigationViewItem, NavigationTransitionInfo? args = default) {
-        var navigationTag = navigationViewItem.Tag as NavigationTag;
-        navigationView.Header = (navigationTag?.Parameter as Chapter)?.Name;
-        frame.Navigate(navigationTag?.Page, navigationTag?.Parameter, args);
+    private void Navigate<TParameter>(FrameworkElement navigationViewItem, NavigationTransitionInfo? args = default) {
+        var navigationTag = navigationViewItem.Tag as NavigationTag<TParameter>;
+        navigationView.Header = navigationTag.Header;
+        navigationView.SelectedItem = navigationViewItem;
+        frame.Navigate(navigationTag.Page, navigationTag.Parameter, args);
     }
     
     private void Back() {
         var pageStackEntry = frame.BackStack[^1];
+        
         if (pageStackEntry.SourcePageType == typeof(SettingPage)) {
             navigationView.SelectedItem = navigationView.SettingsItem;
-        } else if(pageStackEntry.SourcePageType == typeof(GalleryPage)) {
-            // TODO 树形结构带解决 解决方案：在Parameter添加新字段Anchors格式为数组[2024,05,17]查找时遍历
-            navigationView.SelectedItem = navigationView.MenuItems
-                .First(x => {
-                    var navigationTag = (x as UIControls.NavigationViewItem)?.Tag as NavigationTag;
-                    var page = navigationTag?.Page == pageStackEntry.SourcePageType;
-                    var name = (navigationTag?.Parameter as Chapter)?.Name == (pageStackEntry.Parameter as Chapter)?.Name;
-                    return page && name;
-                });
+        } else if (pageStackEntry.SourcePageType == typeof(GalleryPage)) {
+            // 树形结构已解决 解决方案：在Parameter添加新字段Anchors格式为数组[2024,05,17]查找时遍历
+            navigationView.SelectedItem =
+                NavigationUtil.FindNavigationViewItem<Chapter>(navigationView, pageStackEntry);
         } else {
             navigationView.SelectedItem = navigationView.MenuItems
                 .First(x => {
@@ -151,10 +147,15 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
         }
         frame.GoBack();
     }
-    
 }
 
-public record NavigationTag(Type Page, object? Parameter);
+public record NavigationTag(Type Page, string Header, NavigationParameter Parameter);
+
+public record NavigationParameter(string Name, string[] Anchors);
+
+public record NavigationTag<T>(Type Page, string Header, NavigationParameter<T> Parameter);
+
+public record NavigationParameter<T>(string Name, string[] Anchors, T? Payload);
 
 public partial record MainViewModel : BaseViewModel {
 }
