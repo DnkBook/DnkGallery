@@ -1,6 +1,4 @@
-﻿using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.ApplicationModel.DataTransfer;
-using Windows.Graphics.Imaging;
+﻿using Windows.Graphics.Imaging;
 using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.System;
@@ -13,7 +11,6 @@ using Uno.Extensions;
 using BitmapImage = Microsoft.UI.Xaml.Media.Imaging.BitmapImage;
 using KeyboardAccelerator = Microsoft.UI.Xaml.Input.KeyboardAccelerator;
 using Path = System.IO.Path;
-using WriteableBitmap = Microsoft.UI.Xaml.Media.Imaging.WriteableBitmap;
 
 namespace DnkGallery.Presentation.Pages;
 
@@ -21,21 +18,23 @@ namespace DnkGallery.Presentation.Pages;
 public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IBuildUI {
     private UIControls.GridView gridView;
     private UIControls.ContentDialog saveDialog;
-    
     public GalleryPage() {
         BuildUI();
     }
     
     private void ContentInvoke(UIControls.Page obj) {
-        obj.Loaded += (sender, args) => {
+        // obj.Loaded += (sender, args) => {
             // itemsView.ItemTemplate = ItemViewTemplate;
             RegisterAccelerator();
-        };
+        // };
     }
     
     private void GridViewItemInvoke(UIControls.Grid obj) {
         obj.DoubleTapped += (sender, args) => {
-            // Frame.Navigate(typeof(AnaViewerPage), obj.DataContext as Ana);
+            if (obj.DataContext is not Ana ana)
+                return;
+            Navigater.Navigate(ana.Path, typeof(AnaViewerPage),ana.Name,
+                new NavigationParameter<Ana>(ana.Path, [],ana));
         };
     }
     /// <summary>
@@ -72,12 +71,11 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
     private async void CopyInvoke(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
         if (gridView.SelectedItem is not Ana itemsViewSelectedItem)
             return;
-        var dataPackage = new DataPackage();
         var randomAccessStream =
             await FileRandomAccessStream.OpenAsync(itemsViewSelectedItem.Path, FileAccessMode.Read);
-        var randomAccessStreamReference = RandomAccessStreamReference.CreateFromStream(randomAccessStream);
-        dataPackage.SetBitmap(randomAccessStreamReference);
-        Clipboard.SetContent(dataPackage);
+        
+        Clipboarder.CopyImage(randomAccessStream);
+        
     }
     /// <summary>
     /// Ctrl + V粘贴，Win + V可选调出粘贴板
@@ -92,30 +90,15 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
         if (VisualTreeHelper.GetOpenPopups(MainWindow).Count > 0)
             return;
         
-        var dataPackageView = Clipboard.GetContent();
-        //判断是否是图片
-        if (!dataPackageView.Contains(StandardDataFormats.Bitmap))
+        var (image, stream) = await Clipboarder.PasteImage();
+        if (image is null  && stream is null)
             return;
-        
-        var randomAccessStreamReference = await dataPackageView.GetBitmapAsync();
-        using var randomAccessStreamWithContentType = await randomAccessStreamReference.OpenReadAsync();
-        
-        // 这里保存到BitmapImage用于显示
-        var bitmapImage = new BitmapImage();
-        await bitmapImage.SetSourceAsync(randomAccessStreamWithContentType);
-        // 设置到初始位置再读一遍
-        randomAccessStreamWithContentType.Seek(0);
-        // 保存到WriteableBitmap获得流后面用于保存
-        var writeableBitmap = new WriteableBitmap(bitmapImage.PixelWidth, bitmapImage.PixelHeight);
-        await writeableBitmap.SetSourceAsync(randomAccessStreamWithContentType);
-        var stream = writeableBitmap.PixelBuffer.AsStream();
         
         var saveAnaData = new SaveAnaData() {
             Stream = stream,
-            FileName = Ana.NewFileName,
-            Image = bitmapImage,
-            PixelWidth = bitmapImage.PixelWidth,
-            PixelHeight = bitmapImage.PixelHeight
+            FileName = Ana.NewFileName, Image = image,
+            PixelWidth = image.PixelWidth,
+            PixelHeight = image.PixelHeight
         };
         await vm.Model.SaveData.Update(_ => saveAnaData, CancellationToken.None);
         await saveDialog.ShowAsync();
