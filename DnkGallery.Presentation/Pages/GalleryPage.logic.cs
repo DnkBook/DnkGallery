@@ -38,11 +38,6 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
         };
     }
     
-    private void GridViewItemInvoke(UIControls.Grid obj) {
-        obj.DoubleTapped += (sender, args) => {
-            // Frame.Navigate(typeof(AnaViewerPage), obj.DataContext as Ana);
-        };
-    }
     /// <summary>
     /// 订阅快捷键事件
     /// </summary>
