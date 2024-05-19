@@ -1,10 +1,13 @@
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
+using DataTemplate = Microsoft.UI.Xaml.DataTemplate;
+using GridView = CSharpMarkup.WinUI.GridView;
 namespace DnkGallery.Presentation.Pages;
 
 public partial class AnaViewerPage {
     public void BuildUI() => Content(
         Grid(
-            Rows(Star, Auto),
+            Rows(Star,Auto ,Auto),
             
         ScrollViewer(
                 Image()
@@ -20,7 +23,17 @@ public partial class AnaViewerPage {
                 .ZoomFactor().Bind(vm?.Zoom,BindingMode.TwoWay)
                 .Invoke(ScrollViewerInvoke)
                 .Assign(out scrollViewer),
-            
+        // GridView()
+        //     .ScrollViewer_HorizontalScrollMode(UIControls.ScrollMode.Auto)
+        //     .ScrollViewer_VerticalScrollMode(UIControls.ScrollMode.Disabled)
+        //     .ScrollViewer_HorizontalScrollBarVisibility(UIControls.ScrollBarVisibility.Auto)
+        //     .ScrollViewer_VerticalScrollBarVisibility(UIControls.ScrollBarVisibility.Disabled)
+        //     .Grid_Row(1)
+        //     .ItemsSource().Bind(vm?.Anas)
+        //     .SelectedIndex().Bind(vm?.Index,BindingMode.TwoWay)
+        //     .SelectedItem().Bind(vm?.Ana,BindingMode.TwoWay)
+        //     .ItemsPanel(GridViewPanelTemplate)
+        //     .ItemTemplate(GridViewTemplate),
         HStack(
             HyperlinkButton()
                 .Content()
@@ -39,6 +52,17 @@ public partial class AnaViewerPage {
                 .Assign(out zoomOutButton),
             AppBarSeparator(),
             AppBarButton()
+                .Icon(SymbolIcon(UIControls.Symbol.Back).UI)
+                .ToolTipService_ToolTip("上一张")
+                .BindCommand(vm?.Prev)
+                .Assign(out prevButton),
+            AppBarButton()
+                .Icon(SymbolIcon(UIControls.Symbol.Forward).UI)
+                .ToolTipService_ToolTip("下一张")
+                .BindCommand(vm?.Next)
+                .Assign(out nextButton),
+            AppBarSeparator(),
+            AppBarButton()
                 .Icon(SymbolIcon(UIControls.Symbol.Copy).UI)
                 .ToolTipService_ToolTip("复制")
                 .Assign(out copyButton)
@@ -46,4 +70,14 @@ public partial class AnaViewerPage {
             .Height(48).HCenter().VerticalAlignment(VerticalAlignment.Bottom)
         )
     ).Invoke(ContentInvoke);
+    
+    private DataTemplate GridViewTemplate => DataTemplate(() =>
+        Grid(
+            Image().Source().Bind("Path")
+                .Stretch(Stretch.UniformToFill).HCenter().VCenter()
+        ).Width(150).Height(100)
+    );
+    private static ItemsPanelTemplate GridViewPanelTemplate => 
+        ItemsPanelTemplate(() => (CSharpMarkup.WinUI.UIElement)ItemsWrapGrid().Orientation(UIControls.Orientation.Horizontal));
+    
 }

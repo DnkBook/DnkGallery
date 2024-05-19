@@ -24,8 +24,8 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
     
     private void ContentInvoke(UIControls.Page obj) {
         // obj.Loaded += (sender, args) => {
-            // itemsView.ItemTemplate = ItemViewTemplate;
-            RegisterAccelerator();
+        // itemsView.ItemTemplate = ItemViewTemplate;
+        RegisterAccelerator();
         // };
     }
     
@@ -33,8 +33,8 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
         obj.DoubleTapped += (sender, args) => {
             if (obj.DataContext is not Ana ana)
                 return;
-            Navigater.Navigate(ana.Path, typeof(AnaViewerPage),ana.Name,
-                new NavigationParameter<Ana>(ana.Path, [],ana));
+            Navigater.Navigate(ana.Path, typeof(AnaViewerPage), ana.Name, 
+                new NavigationParameter<(IList<Ana>? Anas, Ana ana, int SelectedIndex)>(ana.Path, [], (vm?.Anas, ana, gridView.SelectedIndex)));
         };
     }
     
@@ -92,7 +92,7 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
             return;
         
         var (image, stream) = await Clipboarder.PasteImage();
-        if (image is null  && stream is null)
+        if (image is null && stream is null)
             return;
         
         var saveAnaData = new SaveAnaData() {
@@ -107,7 +107,7 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
 }
 
 public record SaveAnaData {
-    public Stream Stream { get; init; } 
+    public Stream Stream { get; init; }
     public int PixelWidth { get; init; }
     public int PixelHeight { get; init; }
     public BitmapImage Image { get; init; }
@@ -117,7 +117,7 @@ public record SaveAnaData {
 public partial record GalleryViewModel : BaseViewModel {
     
     public IState<ObservableCollection<Ana>> Anas => UseState(() => new ObservableCollection<Ana>());
-    public IState<Chapter> Chapter => UseState(() => new Chapter(default, default, default,default));
+    public IState<Chapter> Chapter => UseState(() => new Chapter(default, default, default, default));
     
     public IState<SaveAnaData> SaveData => UseState(() => new SaveAnaData());
     
