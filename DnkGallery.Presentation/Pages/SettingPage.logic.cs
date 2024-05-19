@@ -10,11 +10,11 @@ public sealed partial class SettingPage : BasePage<BindableSettingViewModel>, IB
 }
 
 public partial record SettingViewModel : BaseViewModel {
-    public IState<Setting> Setting => UseState(() => Service.GetService<Setting>() ?? new Setting());
+    public IState<Setting> Setting => UseState(() => Settings);
     
     public async Task Save() {
         var setting = await Setting;
-        await Service.GetService<Setting>().SaveAsync(setting);
+        await Settings.SaveAsync(setting);
     }
     public async Task Cancel() {
         

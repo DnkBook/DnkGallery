@@ -1,4 +1,5 @@
 using DnkGallery.Model;
+using DnkGallery.Model.Github;
 using DnkGallery.Presentation.Pages;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Uno.Resizetizer;
@@ -69,7 +70,11 @@ public partial class App : Application {
                     .AddContentSerializer(context))
                 .ConfigureServices((context, services) => {
                     services.AddSingleton<Setting>();
-                    services.AddSingleton<IGalleryService, GalleryService>();
+                    
+                    services.AddSingleton<IGitApi, GithubApi>(_ => GithubApi.Create());
+                    
+                    services.AddKeyedSingleton<IGalleryService, GitGalleryService>(Source.Git);
+                    services.AddKeyedSingleton<IGalleryService, LocalGalleryService>(Source.Local);
                 })
             );
         MainWindow = builder.Window;

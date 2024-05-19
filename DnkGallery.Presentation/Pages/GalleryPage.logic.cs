@@ -1,4 +1,5 @@
-﻿using Windows.Graphics.Imaging;
+﻿using System.Collections.Immutable;
+using Windows.Graphics.Imaging;
 using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.System;
@@ -7,7 +8,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
-using Uno.Extensions;
 using BitmapImage = Microsoft.UI.Xaml.Media.Imaging.BitmapImage;
 using KeyboardAccelerator = Microsoft.UI.Xaml.Input.KeyboardAccelerator;
 using Path = System.IO.Path;
@@ -30,11 +30,14 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
     }
     
     private void GridViewItemInvoke(UIControls.Grid obj) {
-        obj.DoubleTapped += (sender, args) => {
+        obj.DoubleTapped += async (sender, args) => {
             if (obj.DataContext is not Ana ana)
                 return;
+            
+            var immutableList = await vm.Model.Anas.Value(CancellationToken.None);
+            
             Navigater.Navigate(ana.Path, typeof(AnaViewerPage), ana.Name, 
-                new NavigationParameter<(IList<Ana>? Anas, Ana ana, int SelectedIndex)>(ana.Path, [], (vm?.Anas, ana, gridView.SelectedIndex)));
+                new NavigationParameter<(IImmutableList<Ana> Anas, Ana ana, int SelectedIndex)>(ana.Path, [], (immutableList, ana, gridView.SelectedIndex)));
         };
     }
     
@@ -116,7 +119,7 @@ public record SaveAnaData {
 
 public partial record GalleryViewModel : BaseViewModel {
     
-    public IState<ObservableCollection<Ana>> Anas => UseState(() => new ObservableCollection<Ana>());
+    public IListState<Ana> Anas => ListState<Ana>.Empty(this);
     public IState<Chapter> Chapter => UseState(() => new Chapter(default, default, default, default));
     
     public IState<SaveAnaData> SaveData => UseState(() => new SaveAnaData());
@@ -152,9 +155,12 @@ public partial record GalleryViewModel : BaseViewModel {
     }
     
     public async Task LoadAnas() {
-        var galleryService = Service.GetService<IGalleryService>()!;
-        var anas = await galleryService.Anas(await Chapter);
-        await Anas.Update(_ => anas.ToObservableCollection(), CancellationToken.None);
+        await Anas.Update(_ => [],CancellationToken.None);
+        var galleryService = Service.GetKeyedService<IGalleryService>(Settings.Source)!;
+        var anas = galleryService.Anas(await Chapter);
+        await foreach (var ana in anas) {
+            await Anas.AddAsync(ana);
+        }
     }
     
     private static Guid GetBitmapEncodeGuid(string filename) => filename switch {

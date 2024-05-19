@@ -38,6 +38,7 @@ public static class Navigater {
         string content,
         Type page,
         TParameter payload,
+        bool hasChildren,
         string[] anchors,
         string? header = default,
         UIControls.Symbol icon = UIControls.Symbol.Calendar) {
@@ -45,7 +46,8 @@ public static class Navigater {
             Content = content,
             Icon = new UIControls.SymbolIcon(icon),
             Tag = new NavigationTag<TParameter>(name, page, header ?? content,
-                new NavigationParameter<TParameter>(name, anchors, payload))
+                new NavigationParameter<TParameter>(name, anchors, payload)),
+            HasUnrealizedChildren = hasChildren
         };
     }
     
@@ -81,6 +83,7 @@ public static class Navigater {
             model.Content,
             model.Page,
             model.Payload,
+            model.HasChilren,
             model.Anchors,
             model.Header,
             model.Icon);
@@ -195,31 +198,19 @@ public static class Navigater {
     /// <param name="hasChildrenPredicate"></param>
     /// <param name="addChildrenFunc"></param>
     /// <param name="parentNavigationViewItem"></param>
-    public static async Task AddNavigationMenuItems<T>(IEnumerable<NavigationItemModel<T>> navigationItemModel,
-        Predicate<NavigationItemModel<T>> hasChildrenPredicate,
-        Func<NavigationItemModel<T>, Task<IEnumerable<NavigationItemModel<T>>>> addChildrenFunc,
+    public static async Task AddNavigationMenuItems<T>(IEnumerable<NavigationItemModel<T>> navigationItemModel, 
         UIControls.NavigationViewItem? parentNavigationViewItem = default) {
         var navigationTag = parentNavigationViewItem?.Tag as NavigationTag<T>;
         var parentAnchors = navigationTag?.Parameter.Anchors;
         
-        // var galleryService = Service.GetService<IGalleryService>()!;
-        var navigationViewItemTasks = navigationItemModel.Select(async item => {
+        var navigationViewItems = navigationItemModel.Select(item => {
             
             item.Anchors = [..parentAnchors ?? [], ..item.Anchors];
             
             var navigationViewItem = NavigationItemModelToNavigationViewItem(item);
             
-            if (!hasChildrenPredicate.Invoke(item))
-                return navigationViewItem;
-            
-            // 如果NavigationItem MenuItem里没东西子菜单没箭头 必须再查一遍子菜单
-            var children = await addChildrenFunc.Invoke(item);
-            var childrenChildrenList = children.Select(NavigationItemModelToNavigationViewItem).ToList();
-            navigationViewItem.MenuItems.AddRange(childrenChildrenList);
-            
             return navigationViewItem;
         });
-        var navigationViewItems = await Task.WhenAll(navigationViewItemTasks);
         
         if (parentNavigationViewItem is not null) {
             parentNavigationViewItem.MenuItems.AddRange(navigationViewItems);
@@ -236,7 +227,7 @@ public class NavigationItemModel<T>() {
     public required string Name { get; set; }
     public required string Content { get; set; }
     public required string Header { get; set; }
-    
+    public bool HasChilren { get; set; }
     public UIControls.Symbol Icon { get; set; }
     public required Type Page { get; set; }
     public string[] Anchors { get; set; } = [];

@@ -8,7 +8,14 @@ public enum Source {
 
 public sealed record Setting {
     public Source Source { get; set; } = Source.Local;
-    public string SourcePath { get; set; } = ".";
+    public string LocalPath { get; set; } = ".";
+    public string GitRepos { get; set; } = "Ishning/dnkFuns";
+    
+    public string SourcePath => Source switch {
+        Source.Local => LocalPath,
+        Source.Git => Path.AltDirectorySeparatorChar.ToString(),
+        _ => throw new ArgumentOutOfRangeException()
+    };
     
     private JsonSerializerOptions jsonSerializerOptions = new() { WriteIndented = true };
     
@@ -42,7 +49,8 @@ public sealed record Setting {
     
     private void Update(Setting setting) {
         Source = setting.Source;
-        SourcePath = setting.SourcePath;
+        LocalPath = setting.LocalPath;
+        GitRepos = setting.GitRepos;
     }
     
     public event EventHandler<Setting> SettingChanged;

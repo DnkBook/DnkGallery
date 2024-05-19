@@ -26,10 +26,15 @@ public partial class SettingPage {
                     .Width(300)
                     .SelectedItem()
                     .Bind(vm?.Setting?.Source, BindingMode.TwoWay)),
-                SettingsExpanderContent(TextBlock("源地址"), 
+                SettingsExpanderContent(TextBlock("本地地址"), 
                     TextBox()
                         .MaxWidth(300)
-                    .Text().Bind(vm?.Setting?.SourcePath, BindingMode.TwoWay))
+                    .Text().Bind(vm?.Setting?.LocalPath, BindingMode.TwoWay)),
+                SettingsExpanderContent(TextBlock("Git仓库"),
+                    TextBox()
+                        .MaxWidth(300)
+                        .Text().Bind(vm?.Setting?.GitRepos, BindingMode.TwoWay)),
+                Button("保存").BindCommand(vm?.Save)
             ], SymbolIcon(UIControls.Symbol.Folder),
             "语录册源",
             "使用本地源或者从Git上获取")
