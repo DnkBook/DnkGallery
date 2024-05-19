@@ -13,10 +13,14 @@ public sealed partial class AnaViewerPage : BasePage<BindableAnaViewViewModel>, 
     private UIControls.AppBarButton zoomInButton;
     private UIControls.AppBarButton zoomOutButton;
     private UIControls.AppBarButton copyButton;
+    private UIControls.AppBarButton prevButton;
+    private UIControls.AppBarButton nextButton;
     public AnaViewerPage() => BuildUI();
     protected override async void OnNavigatedTo(NavigationEventArgs e) {
-        var ana = e.Parameter as NavigationParameter<Ana>;
-        await vm.Model.Ana.Update(_ => ana.Payload, CancellationToken.None);
+        var parameter = e.Parameter as NavigationParameter<(IList<Ana> Anas, Ana Ana, int Index)>;
+        await vm.Model.Anas.Update(_ => parameter.Payload.Anas, CancellationToken.None);
+        await vm.Model.Index.Update(_ => parameter.Payload.Index, CancellationToken.None);
+        await vm.Model.Ana.Update(_ => parameter.Payload.Ana, CancellationToken.None);
         base.OnNavigatedTo(e);
     }
     private void ImageInvoke(UIControls.Image image) {
@@ -28,12 +32,12 @@ public sealed partial class AnaViewerPage : BasePage<BindableAnaViewViewModel>, 
         obj.ZoomToFactor(1.0F);
     }
     private void ContentInvoke(UIControls.Page obj) {
-        zoomResetButton.Tapped +=  (sender, args) => scrollViewer.ZoomToFactor(1.0F);
+        zoomResetButton.Tapped += (sender, args) => scrollViewer.ZoomToFactor(1.0F);
         copyButton.Tapped += async (sender, args) => {
-             await Copy();
+            await Copy();
         };
         // obj.Loaded += (sender, args) => {
-            RegisterAccelerator();
+        RegisterAccelerator();
         // };
     }
     /// <summary>
@@ -47,7 +51,7 @@ public sealed partial class AnaViewerPage : BasePage<BindableAnaViewViewModel>, 
     
     public async Task Copy() {
         var ana = await vm.Model.Ana;
-        if(ana is null)
+        if (ana is null)
             return;
         var randomAccessStream =
             await FileRandomAccessStream.OpenAsync(ana.Path, FileAccessMode.Read);
@@ -69,8 +73,11 @@ public sealed partial class AnaViewerPage : BasePage<BindableAnaViewViewModel>, 
 }
 
 public partial record AnaViewViewModel : BaseViewModel {
-    public IState<Ana> Ana => UseState(() => new Ana(default, default, default));
     
+    public IState<Ana> Ana => UseState(() => new Ana(default, default, default));
+    public IState<IList<Ana>> Anas => UseState<IList<Ana>>(() => []);
+    public IState<int> Index => UseState(() => 0);
+
     public IState<float> Zoom => UseState(() => 1.0F);
     
     public async Task ZoomIn() {
@@ -79,6 +86,17 @@ public partial record AnaViewViewModel : BaseViewModel {
     public async Task ZoomOut() {
         await SetState(Zoom, zoom => zoom - 0.1F);
     }
+    public async Task Prev() {
+        var anas = await Anas;
+        await SetState(Index, index => index <= 0 ? anas?.Count - 1 ?? 0 : index - 1);
+        var index = await Index;
+        await SetState(Ana, _ => anas?[index]);
+    }
+    public async Task Next() {
+        var anas = await Anas;
+        await SetState(Index, index => index >= anas?.Count - 1 ? 0 : index + 1);
+        var index = await Index;
+        await SetState(Ana, _ => anas?[index]);
+    }
     
-
 }
