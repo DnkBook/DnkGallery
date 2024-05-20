@@ -4,11 +4,11 @@ using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.System;
 using DnkGallery.Model;
+using DnkGallery.Model.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
-using BitmapImage = Microsoft.UI.Xaml.Media.Imaging.BitmapImage;
 using KeyboardAccelerator = Microsoft.UI.Xaml.Input.KeyboardAccelerator;
 using Path = System.IO.Path;
 
@@ -75,7 +75,7 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
     private async void CopyInvoke(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
         if (gridView.SelectedItem is not Ana itemsViewSelectedItem)
             return;
-        var randomAccessStream =
+        var randomAccessStream = 
             await FileRandomAccessStream.OpenAsync(itemsViewSelectedItem.Path, FileAccessMode.Read);
         
         Clipboarder.CopyImage(randomAccessStream);
@@ -98,7 +98,7 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
         if (image is null && stream is null)
             return;
         
-        var saveAnaData = new SaveAnaData() {
+        var saveAnaData = new StorageSaveImageData() {
             Stream = stream,
             FileName = Ana.NewFileName, Image = image,
             PixelWidth = image.PixelWidth,
@@ -109,20 +109,14 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
     }
 }
 
-public record SaveAnaData {
-    public Stream Stream { get; init; }
-    public int PixelWidth { get; init; }
-    public int PixelHeight { get; init; }
-    public BitmapImage Image { get; init; }
-    public string FileName { get; init; } = Ana.NewFileName;
-}
+
 
 public partial record GalleryViewModel : BaseViewModel {
     
     public IListState<Ana> Anas => ListState<Ana>.Empty(this);
     public IState<Chapter> Chapter => UseState(() => new Chapter(default, default, default, default));
     
-    public IState<SaveAnaData> SaveData => UseState(() => new SaveAnaData());
+    public IState<StorageSaveImageData> SaveData => UseState(() => new StorageSaveImageData());
     
     
     public async Task Save() {
@@ -171,4 +165,12 @@ public partial record GalleryViewModel : BaseViewModel {
         ".gif" => BitmapEncoder.GifEncoderId,
         _ => BitmapEncoder.JpegEncoderId,
     };
+}
+public class StorageSaveImageData {
+    public Stream Stream { get; init; }
+    public int PixelWidth { get; init; }
+    public int PixelHeight { get; init; }
+    
+    public BitmapImage Image { get; init; }
+    public string FileName { get; init; } = Ana.NewFileName;
 }

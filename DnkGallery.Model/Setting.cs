@@ -11,11 +11,14 @@ public sealed record Setting {
     public string LocalPath { get; set; } = ".";
     public string GitRepos { get; set; } = "Ishning/dnkFuns";
     
+    public string GitAccessToken { get; set; }
+
     public string SourcePath => Source switch {
         Source.Local => LocalPath,
         Source.Git => Path.AltDirectorySeparatorChar.ToString(),
         _ => throw new ArgumentOutOfRangeException()
     };
+    
     
     private JsonSerializerOptions jsonSerializerOptions = new() { WriteIndented = true };
     
@@ -51,6 +54,7 @@ public sealed record Setting {
         Source = setting.Source;
         LocalPath = setting.LocalPath;
         GitRepos = setting.GitRepos;
+        GitAccessToken = setting.GitAccessToken;
     }
     
     public event EventHandler<Setting> SettingChanged;

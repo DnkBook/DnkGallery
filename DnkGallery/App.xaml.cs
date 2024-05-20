@@ -1,8 +1,11 @@
 using DnkGallery.Model;
 using DnkGallery.Model.Github;
+using DnkGallery.Model.Services;
 using DnkGallery.Presentation.Pages;
 using Microsoft.UI.Composition.SystemBackdrops;
+using Octokit;
 using Uno.Resizetizer;
+using Application = Microsoft.UI.Xaml.Application;
 
 namespace DnkGallery;
 
@@ -70,11 +73,12 @@ public partial class App : Application {
                     .AddContentSerializer(context))
                 .ConfigureServices((context, services) => {
                     services.AddSingleton<Setting>();
-                    
-                    services.AddSingleton<IGitApi, GithubApi>(_ => GithubApi.Create());
-                    
-                    services.AddKeyedSingleton<IGalleryService, GitGalleryService>(Source.Git);
+                    services.AddSingleton<GitHubClient>(_ => new GitHubClient(new ProductHeaderValue("DnkGallery")) {
+                        Credentials = new Credentials(_.GetService<Setting>()?.GitAccessToken)
+                    });
+                    services.AddSingleton<IGitApi, GithubApi>();
                     services.AddKeyedSingleton<IGalleryService, LocalGalleryService>(Source.Local);
+                    services.AddKeyedSingleton<IGalleryService, GitGalleryService>(Source.Git);
                 })
             );
         MainWindow = builder.Window;
