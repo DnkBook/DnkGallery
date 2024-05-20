@@ -1,4 +1,5 @@
 ﻿using DnkGallery.Model;
+using DnkGallery.Model.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
@@ -24,19 +25,12 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
     }
     
     private async Task LoadNavigation() {
-        var galleryService = Service.GetService<IGalleryService>()!;
-        var chapters = await galleryService.Chapters(Service.GetService<Setting>()!.SourcePath);
+        var galleryService = Service.GetKeyedService<IGalleryService>(Settings.Source)!;
+        var chapters = await galleryService.Chapters(Settings.SourcePath);
         var navigationItemModels = chapters.Select(CreateChapterNavigationItemModel);
         
         navigationView.MenuItems.Clear();
-        await Navigater.AddNavigationMenuItems(navigationItemModels,
-            model => model.Payload.HasChildren,
-            async model => {
-                var payloadDir = model.Payload.Dir;
-                var list = await galleryService.Chapters(payloadDir);
-                var itemModels = list.Select(CreateChapterNavigationItemModel);
-                return itemModels;
-            });
+        await Navigater.AddNavigationMenuItems(navigationItemModels);
         
         // 默认导航到第一个菜单
         if (navigationView.MenuItems is { Count: > 0 } && navigationView.MenuItems[0] is UIControls.NavigationViewItem navigationViewMenuItem) {
@@ -57,6 +51,7 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
             Name = chapter.Name,
             Content = chapter.Name,
             Header = chapter.Name,
+            HasChildren = chapter.HasChildren,
             Page = typeof(GalleryPage),
             Anchors = chapter.Anchors,
             Icon = UIControls.Symbol.Calendar,
@@ -73,21 +68,15 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
         
         navigationView.Expanding += async (sender, args) => {
             var navigationViewItem = args.ExpandingItem as UIControls.NavigationViewItem;
-            if (navigationViewItem?.Tag is NavigationTag<Chapter> { Parameter.Payload.Dir: not null } navigationTag) {  
-                var galleryService = Service.GetService<IGalleryService>()!;
+            if (navigationViewItem?.MenuItems.Count>0) 
+                return;
+            if (navigationViewItem?.Tag is NavigationTag<Chapter> { Parameter.Payload.Dir: not null } navigationTag) {
+                var galleryService = Service.GetKeyedService<IGalleryService>(Settings.Source)!;
                 var chapters = await galleryService.Chapters(navigationTag.Parameter.Payload.Dir);
                 
                 var navigationItemModels = chapters.Select(CreateChapterNavigationItemModel);
-                navigationViewItem.MenuItems.Clear();
-                await Navigater.AddNavigationMenuItems(navigationItemModels,
-                    model => model.Payload.HasChildren,
-                    async model => {
-                        var payloadDir = model.Payload.Dir;
-                        var list = await galleryService.Chapters(payloadDir);
-                        var itemModels = list.Select(CreateChapterNavigationItemModel);
-                        return itemModels;
-                    }, navigationViewItem);
-            }else{
+                await Navigater.AddNavigationMenuItems(navigationItemModels, navigationViewItem);
+            } else {
                 // 补充其它的展开策略
             }
         };
@@ -108,7 +97,8 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
             //设置导航写死了
             if (args.IsSettingsInvoked) {
                 Navigater.Navigate(SettingPage.Header, typeof(SettingPage), SettingPage.Header, args.RecommendedNavigationTransitionInfo);
-            } else switch (args.InvokedItemContainer) {
+            } else
+                switch (args.InvokedItemContainer) {
                     case UIControls.NavigationViewItem { Tag: NavigationTag<Chapter> } chapterNavigationViewItem:
                         Navigater.Navigate<Chapter>(chapterNavigationViewItem, args.RecommendedNavigationTransitionInfo);
                         break;
@@ -129,10 +119,10 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
             navigationView.Header = SettingPage.Header;
             navigationView.SelectedItem = navigationView.SettingsItem;
             frame.GoBack();
-        }else {
+        } else {
             Navigater.Back(pageStackEntry);
         }
-
+        
     }
 }
 

@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using DnkGallery.Model;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Navigation;
 
@@ -20,6 +22,8 @@ public abstract partial class BasePage : UIControls.Page {
 #endif
     
     protected IServiceProvider Service => Host.Services;
+    
+    protected Setting Settings => Service.GetService<Setting>()!;
     
     protected static IHost? Host { get; set; }
     

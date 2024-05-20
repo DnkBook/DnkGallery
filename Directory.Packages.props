@@ -8,6 +8,7 @@
     <PackageVersion Include="CSharpMarkup.WinUI" Version="2.4.18" />
     <PackageVersion Include="CSharpMarkup.WinUI.Uno.Extensions.Reactive" Version="2.4.18" />
     <PackageVersion Include="CSharpMarkup.WinUI.Uno.Toolkit" Version="2.4.18" />
+    <PackageVersion Include="Octokit" Version="11.0.1" />
     <PackageVersion Include="Uno.Extensions.Reactive" Version="4.1.21" />
     <PackageVersion Include="Uno.Extensions.Reactive.WinUI" Version="4.2.0-dev.71" />
   </ItemGroup>

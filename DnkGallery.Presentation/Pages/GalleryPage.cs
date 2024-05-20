@@ -35,7 +35,7 @@ public partial class GalleryPage {
     
     private DataTemplate GridViewTemplate => DataTemplate(() =>
         Grid(
-            Image().Source().Bind("Path")
+            Image().Source().Bind("ImageBytes", convert:  (byte[] bytes) =>  ByteArrayConvertToBitmapImage(bytes))
                 .Stretch(Stretch.UniformToFill).HCenter().VCenter(),
             VStack(
                     TextBlock()

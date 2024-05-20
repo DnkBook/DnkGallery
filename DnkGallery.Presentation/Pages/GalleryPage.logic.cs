@@ -1,14 +1,14 @@
-﻿using Windows.Graphics.Imaging;
+﻿using System.Collections.Immutable;
+using Windows.Graphics.Imaging;
 using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.System;
 using DnkGallery.Model;
+using DnkGallery.Model.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
-using Uno.Extensions;
-using BitmapImage = Microsoft.UI.Xaml.Media.Imaging.BitmapImage;
 using KeyboardAccelerator = Microsoft.UI.Xaml.Input.KeyboardAccelerator;
 using Path = System.IO.Path;
 
@@ -30,11 +30,14 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
     }
     
     private void GridViewItemInvoke(UIControls.Grid obj) {
-        obj.DoubleTapped += (sender, args) => {
+        obj.DoubleTapped += async (sender, args) => {
             if (obj.DataContext is not Ana ana)
                 return;
+            
+            var immutableList = await vm.Model.Anas.Value(CancellationToken.None);
+            
             Navigater.Navigate(ana.Path, typeof(AnaViewerPage), ana.Name, 
-                new NavigationParameter<(IList<Ana>? Anas, Ana ana, int SelectedIndex)>(ana.Path, [], (vm?.Anas, ana, gridView.SelectedIndex)));
+                new NavigationParameter<(IImmutableList<Ana> Anas, Ana ana, int SelectedIndex)>(ana.Path, [], (immutableList, ana, gridView.SelectedIndex)));
         };
     }
     
@@ -72,7 +75,7 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
     private async void CopyInvoke(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
         if (gridView.SelectedItem is not Ana itemsViewSelectedItem)
             return;
-        var randomAccessStream =
+        var randomAccessStream = 
             await FileRandomAccessStream.OpenAsync(itemsViewSelectedItem.Path, FileAccessMode.Read);
         
         Clipboarder.CopyImage(randomAccessStream);
@@ -95,7 +98,7 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
         if (image is null && stream is null)
             return;
         
-        var saveAnaData = new SaveAnaData() {
+        var saveAnaData = new StorageSaveImageData() {
             Stream = stream,
             FileName = Ana.NewFileName, Image = image,
             PixelWidth = image.PixelWidth,
@@ -106,20 +109,14 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
     }
 }
 
-public record SaveAnaData {
-    public Stream Stream { get; init; }
-    public int PixelWidth { get; init; }
-    public int PixelHeight { get; init; }
-    public BitmapImage Image { get; init; }
-    public string FileName { get; init; } = Ana.NewFileName;
-}
+
 
 public partial record GalleryViewModel : BaseViewModel {
     
-    public IState<ObservableCollection<Ana>> Anas => UseState(() => new ObservableCollection<Ana>());
+    public IListState<Ana> Anas => ListState<Ana>.Empty(this);
     public IState<Chapter> Chapter => UseState(() => new Chapter(default, default, default, default));
     
-    public IState<SaveAnaData> SaveData => UseState(() => new SaveAnaData());
+    public IState<StorageSaveImageData> SaveData => UseState(() => new StorageSaveImageData());
     
     
     public async Task Save() {
@@ -152,9 +149,12 @@ public partial record GalleryViewModel : BaseViewModel {
     }
     
     public async Task LoadAnas() {
-        var galleryService = Service.GetService<IGalleryService>()!;
-        var anas = await galleryService.Anas(await Chapter);
-        await Anas.Update(_ => anas.ToObservableCollection(), CancellationToken.None);
+        await Anas.Update(_ => [],CancellationToken.None);
+        var galleryService = Service.GetKeyedService<IGalleryService>(Settings.Source)!;
+        var anas = galleryService.Anas(await Chapter);
+        await foreach (var ana in anas) {
+            await Anas.AddAsync(ana);
+        }
     }
     
     private static Guid GetBitmapEncodeGuid(string filename) => filename switch {
@@ -165,4 +165,12 @@ public partial record GalleryViewModel : BaseViewModel {
         ".gif" => BitmapEncoder.GifEncoderId,
         _ => BitmapEncoder.JpegEncoderId,
     };
+}
+public class StorageSaveImageData {
+    public Stream Stream { get; init; }
+    public int PixelWidth { get; init; }
+    public int PixelHeight { get; init; }
+    
+    public BitmapImage Image { get; init; }
+    public string FileName { get; init; } = Ana.NewFileName;
 }
