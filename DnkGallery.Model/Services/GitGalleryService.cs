@@ -1,7 +1,5 @@
-using System.Security.AccessControl;
 using DnkGallery.Model.Github;
 using Octokit;
-using FileMode = System.IO.FileMode;
 
 namespace DnkGallery.Model.Services;
 
@@ -51,7 +49,7 @@ public class GitGalleryService(IGitApi gitApi, Setting setting)
     /// <param name="path"></param>
     /// <param name="saveProvider"></param>
     /// <returns></returns>
-    private async Task<Ana> GetLocalIfNotExistsSaveIt(string path, Func<Task<Ana>>? saveProvider) {
+    private async Task<Ana> GetLocalIfNotExistsSaveIt(string path, Func<Task<Ana>> saveProvider) {
         var settingLocalPath = setting.LocalPath;
         var fullName = Path.Combine(settingLocalPath, path);
         if (File.Exists(fullName)) {
@@ -59,11 +57,12 @@ public class GitGalleryService(IGitApi gitApi, Setting setting)
             var ana = new Ana(fileName, fullName);
             var readAllBytes = await File.ReadAllBytesAsync(fullName);
             ana.ImageBytes = readAllBytes;
+            ana.LocalExists = true;
             return ana;
         }
-        // TODO SAVE ERROR
-        var saveAna = await saveProvider?.Invoke();
-        await File.WriteAllBytesAsync(fullName, saveAna.ImageBytes);
+        var saveAna = await saveProvider.Invoke();
+        //  SAVE ERROR 用视图层的Storage保存
+        // await File.WriteAllBytesAsync(fullName, saveAna.ImageBytes);
         return saveAna;
     }
     

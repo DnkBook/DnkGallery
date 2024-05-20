@@ -11,5 +11,6 @@
     <PackageVersion Include="Octokit" Version="11.0.1" />
     <PackageVersion Include="Uno.Extensions.Reactive" Version="4.1.21" />
     <PackageVersion Include="Uno.Extensions.Reactive.WinUI" Version="4.2.0-dev.71" />
+    <PackageVersion Include="Uno.WinUI" Version="5.2.121" />
   </ItemGroup>
 </Project>

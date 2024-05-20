@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using KeyboardAccelerator = Microsoft.UI.Xaml.Input.KeyboardAccelerator;
+using Path = System.IO.Path;
 
 namespace DnkGallery.Presentation.Pages;
 
@@ -91,15 +92,15 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
         
         var (image, bytes) = await Clipboarder.PasteImage();
         var chapter = await vm.Model.Chapter;
-
+        
         if (image is null || bytes is null || chapter is null)
             return;
         
-        var saveAnaData = new StorageSaveImageData(Ana.NewFileName) {
+        var newFileName = Ana.NewFileName;
+        var saveAnaData = new StorageSaveImageData(newFileName) {
             ImageBytes = bytes,
-            FileName = Ana.NewFileName,
             Image = image,
-            Dir = chapter.Dir,
+            FullName = Path.Combine(chapter.Dir, newFileName),
             PixelWidth = image.PixelWidth,
             PixelHeight = image.PixelHeight
         };
@@ -127,14 +128,24 @@ public partial record GalleryViewModel : BaseViewModel {
     }
     
     public async Task LoadAnas() {
+        var chapter = await Chapter;
         await Anas.RemoveAllAsync(_ => true, CancellationToken.None);
         var galleryService = Service.GetKeyedService<IGalleryService>(Settings.Source)!;
-        var anas = galleryService.Anas(await Chapter);
+        var anas = galleryService.Anas(chapter);
         await foreach (var ana in anas) {
+            // 这里保存很奇怪 还是用Git拉取吧
+            // if (!ana.LocalExists) {
+            //     var storageSaveImageData = new StorageSaveImageData(ana.Name) {
+            //         ImageBytes = ana.ImageBytes,
+            //         PixelWidth = 500,
+            //         PixelHeight = 500,
+            //         FullName = Path.Combine(Settings.LocalPath, ana.Path),
+            //     };
+            //     await Storage.SaveImage(storageSaveImageData);
+            // }
             await Anas.AddAsync(ana);
         }
     }
     
-
+    
 }
-
