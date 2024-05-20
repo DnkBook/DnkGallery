@@ -1,7 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using DataTemplate = Microsoft.UI.Xaml.DataTemplate;
-using GridView = CSharpMarkup.WinUI.GridView;
 namespace DnkGallery.Presentation.Pages;
 
 public partial class AnaViewerPage {
@@ -13,7 +12,7 @@ public partial class AnaViewerPage {
                 Image()
                     .HCenter()
                     .VCenter()
-                    .Source().Bind(vm?.Ana?.Path)
+                    .Source().Bind(vm?.Ana?.ImageBytes, convert:  (byte[] bytes) =>  ByteArrayConvertToBitmapImage(bytes))
                 .Invoke(ImageInvoke)
                 ).ScrollViewer_ZoomMode(UIControls.ZoomMode.Enabled)
                 .IsTabStop(true)

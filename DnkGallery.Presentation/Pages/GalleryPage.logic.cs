@@ -1,7 +1,4 @@
 ﻿using System.Collections.Immutable;
-using Windows.Graphics.Imaging;
-using Windows.Storage;
-using Windows.Storage.Streams;
 using Windows.System;
 using DnkGallery.Model;
 using DnkGallery.Model.Services;
@@ -10,7 +7,6 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using KeyboardAccelerator = Microsoft.UI.Xaml.Input.KeyboardAccelerator;
-using Path = System.IO.Path;
 
 namespace DnkGallery.Presentation.Pages;
 
@@ -75,11 +71,10 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
     private async void CopyInvoke(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
         if (gridView.SelectedItem is not Ana itemsViewSelectedItem)
             return;
-        var randomAccessStream =
-            await FileRandomAccessStream.OpenAsync(itemsViewSelectedItem.Path, FileAccessMode.Read);
         
-        Clipboarder.CopyImage(randomAccessStream);
-        
+        if (itemsViewSelectedItem.ImageBytes != null) {
+            await Clipboarder.CopyImage(itemsViewSelectedItem.ImageBytes);
+        }
     }
     /// <summary>
     /// Ctrl + V粘贴，Win + V可选调出粘贴板
@@ -94,18 +89,23 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
         if (VisualTreeHelper.GetOpenPopups(MainWindow).Count > 0)
             return;
         
-        var (image, stream) = await Clipboarder.PasteImage();
-        if (image is null && stream is null)
+        var (image, bytes) = await Clipboarder.PasteImage();
+        var chapter = await vm.Model.Chapter;
+
+        if (image is null || bytes is null || chapter is null)
             return;
         
-        var saveAnaData = new StorageSaveImageData() {
-            Stream = stream,
-            FileName = Ana.NewFileName, Image = image,
+        var saveAnaData = new StorageSaveImageData(Ana.NewFileName) {
+            ImageBytes = bytes,
+            FileName = Ana.NewFileName,
+            Image = image,
+            Dir = chapter.Dir,
             PixelWidth = image.PixelWidth,
             PixelHeight = image.PixelHeight
         };
         await vm.Model.SaveData.Update(_ => saveAnaData, CancellationToken.None);
         await saveDialog.ShowAsync();
+        
     }
 }
 
@@ -118,32 +118,12 @@ public partial record GalleryViewModel : BaseViewModel {
     
     
     public async Task Save() {
-        var chapter = await Chapter;
         var saveAnaData = await SaveData;
-        var saveFileName = saveAnaData.FileName;
-        await using var pixelStream = saveAnaData.Stream;
-        
-        var folderFromPath = await StorageFolder.GetFolderFromPathAsync(chapter.Dir);
-        var storageFile = await folderFromPath.CreateFileAsync(saveFileName);
-        using var randomAccessStream =
-            await storageFile.OpenAsync(FileAccessMode.ReadWrite, StorageOpenOptions.AllowReadersAndWriters);
-        
-        var bitmapEncodeGuid = GetBitmapEncodeGuid(Path.GetExtension(saveFileName));
-        var bitmapEncoder = await BitmapEncoder.CreateAsync(bitmapEncodeGuid, randomAccessStream);
-        
-        
-        var pixels = new byte[pixelStream.Length];
-        await pixelStream.ReadAsync(pixels);
-        bitmapEncoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Ignore,
-            (uint)saveAnaData.PixelWidth,
-            (uint)saveAnaData.PixelHeight,
-            96.0,
-            96.0,
-            pixels);
-        await bitmapEncoder.FlushAsync();
-        
-        // 保存完reload一下
-        await LoadAnas();
+        if (saveAnaData != null) {
+            await Storage.SaveImage(saveAnaData);
+            // 保存完reload一下
+            await LoadAnas();
+        }
     }
     
     public async Task LoadAnas() {
@@ -155,21 +135,6 @@ public partial record GalleryViewModel : BaseViewModel {
         }
     }
     
-    private static Guid GetBitmapEncodeGuid(string filename) => filename switch {
-        ".jpg" => BitmapEncoder.JpegEncoderId,
-        ".png" => BitmapEncoder.PngEncoderId,
-        ".bmp" => BitmapEncoder.BmpEncoderId,
-        ".tiff" => BitmapEncoder.TiffEncoderId,
-        ".gif" => BitmapEncoder.GifEncoderId,
-        _ => BitmapEncoder.JpegEncoderId,
-    };
+
 }
 
-public class StorageSaveImageData {
-    public Stream? Stream { get; init; }
-    public int PixelWidth { get; init; }
-    public int PixelHeight { get; init; }
-    
-    public BitmapImage? Image { get; init; }
-    public string FileName { get; init; } = Ana.NewFileName;
-}
