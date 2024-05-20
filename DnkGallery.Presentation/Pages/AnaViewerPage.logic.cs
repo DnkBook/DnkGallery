@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.System;
@@ -17,7 +18,7 @@ public sealed partial class AnaViewerPage : BasePage<BindableAnaViewViewModel>, 
     private UIControls.AppBarButton nextButton;
     public AnaViewerPage() => BuildUI();
     protected override async void OnNavigatedTo(NavigationEventArgs e) {
-        var parameter = e.Parameter as NavigationParameter<(IList<Ana> Anas, Ana Ana, int Index)>;
+        var parameter = e.Parameter as NavigationParameter<(IImmutableList<Ana> Anas, Ana Ana, int Index)>;
         await vm.Model.Anas.Update(_ => parameter.Payload.Anas, CancellationToken.None);
         await vm.Model.Index.Update(_ => parameter.Payload.Index, CancellationToken.None);
         await vm.Model.Ana.Update(_ => parameter.Payload.Ana, CancellationToken.None);
@@ -74,8 +75,9 @@ public sealed partial class AnaViewerPage : BasePage<BindableAnaViewViewModel>, 
 
 public partial record AnaViewViewModel : BaseViewModel {
     
-    public IState<Ana> Ana => UseState(() => new Ana(default, default, default));
-    public IState<IList<Ana>> Anas => UseState<IList<Ana>>(() => []);
+    public IState<Ana> Ana => State<Ana>.Empty(this);
+    public IListState<Ana> Anas => ListState<Ana>.Empty(this);
+
     public IState<int> Index => UseState(() => 0);
 
     public IState<float> Zoom => UseState(() => 1.0F);

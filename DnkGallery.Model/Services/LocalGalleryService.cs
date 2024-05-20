@@ -10,7 +10,7 @@ public class LocalGalleryService: IGalleryService {
         var directoryInfo = new DirectoryInfo(chapter.Dir);
         var list = Task.Run(() => directoryInfo.GetFiles("*.*", SearchOption.AllDirectories)
             .Where(x => Ana.NameFilter(x.FullName))
-            .Select(x => new Ana(x.FullName, x.Name)).ToList());
+            .Select(x => new Ana(x.Name,x.FullName)).ToList());
         foreach (var ana in await list) {
             var anaPath = ana.Path;
             var readAllBytes = await File.ReadAllBytesAsync(anaPath);

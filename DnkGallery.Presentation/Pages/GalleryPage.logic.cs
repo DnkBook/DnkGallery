@@ -36,7 +36,7 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
             
             var immutableList = await vm.Model.Anas.Value(CancellationToken.None);
             
-            Navigater.Navigate(ana.Path, typeof(AnaViewerPage), ana.Name, 
+            Navigater.Navigate(ana.Path, typeof(AnaViewerPage), ana.Name,
                 new NavigationParameter<(IImmutableList<Ana> Anas, Ana ana, int SelectedIndex)>(ana.Path, [], (immutableList, ana, gridView.SelectedIndex)));
         };
     }
@@ -75,7 +75,7 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
     private async void CopyInvoke(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
         if (gridView.SelectedItem is not Ana itemsViewSelectedItem)
             return;
-        var randomAccessStream = 
+        var randomAccessStream =
             await FileRandomAccessStream.OpenAsync(itemsViewSelectedItem.Path, FileAccessMode.Read);
         
         Clipboarder.CopyImage(randomAccessStream);
@@ -109,14 +109,12 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
     }
 }
 
-
-
 public partial record GalleryViewModel : BaseViewModel {
     
     public IListState<Ana> Anas => ListState<Ana>.Empty(this);
-    public IState<Chapter> Chapter => UseState(() => new Chapter(default, default, default, default));
+    public IState<Chapter> Chapter => State<Chapter>.Empty(this);
     
-    public IState<StorageSaveImageData> SaveData => UseState(() => new StorageSaveImageData());
+    public IState<StorageSaveImageData> SaveData => State<StorageSaveImageData>.Empty(this);
     
     
     public async Task Save() {
@@ -149,7 +147,7 @@ public partial record GalleryViewModel : BaseViewModel {
     }
     
     public async Task LoadAnas() {
-        await Anas.Update(_ => [],CancellationToken.None);
+        await Anas.RemoveAllAsync(_ => true, CancellationToken.None);
         var galleryService = Service.GetKeyedService<IGalleryService>(Settings.Source)!;
         var anas = galleryService.Anas(await Chapter);
         await foreach (var ana in anas) {
@@ -166,11 +164,12 @@ public partial record GalleryViewModel : BaseViewModel {
         _ => BitmapEncoder.JpegEncoderId,
     };
 }
+
 public class StorageSaveImageData {
-    public Stream Stream { get; init; }
+    public Stream? Stream { get; init; }
     public int PixelWidth { get; init; }
     public int PixelHeight { get; init; }
     
-    public BitmapImage Image { get; init; }
+    public BitmapImage? Image { get; init; }
     public string FileName { get; init; } = Ana.NewFileName;
 }
