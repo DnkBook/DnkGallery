@@ -11,6 +11,8 @@ public record Ana {
     public string Name { get; set; }
     public DateTime DateTime { get; set; }
     
+    public bool LocalExists { get; set; }
+    
     public byte[]? ImageBytes { get; set; }
     public static string NewFileName => DateTime.Now.ToString("yyyy-MM-dd_HHmmss") + ".jpg";
     

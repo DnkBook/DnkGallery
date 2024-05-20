@@ -15,6 +15,7 @@ public class LocalGalleryService: IGalleryService {
             var anaPath = ana.Path;
             var readAllBytes = await File.ReadAllBytesAsync(anaPath);
             ana.ImageBytes = readAllBytes;
+            ana.LocalExists = true;
             yield return ana;
         }
     }

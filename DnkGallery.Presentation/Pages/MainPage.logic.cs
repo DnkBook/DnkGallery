@@ -1,8 +1,11 @@
-﻿using DnkGallery.Model;
+﻿using Windows.Foundation;
+using DnkGallery.Model;
 using DnkGallery.Model.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
+using FrameworkElement = Microsoft.UI.Xaml.FrameworkElement;
 
 namespace DnkGallery.Presentation.Pages;
 
@@ -10,8 +13,10 @@ namespace DnkGallery.Presentation.Pages;
 public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI {
     private UIControls.Frame frame;
     private UIControls.NavigationView navigationView;
-    
+    private UIControls.CommandBar commandBar;
+    private UIControls.StackPanel hstack;
     public MainPage(Window window, IHost host) {
+        MainWindow = window;
         BuildUI();
         Host = host;
         Ioc.Service = host.Services;
@@ -20,10 +25,32 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
         if (setting != null) {
             setting.SettingChanged += (_, _) => { DispatcherQueue.TryEnqueue(async () => await LoadNavigation()); };
         }
-        
-        MainWindow = window;
+#if WINDOWS        
+        // hstack.Loaded += (sender, args) => AllowsClickThrough(hstack);
+#endif
     }
     
+    private void AllowsClickThrough(FrameworkElement frameworkElement) {
+        var nonClientInputSrc = InputNonClientPointerSource.GetForWindowId(MainWindow.AppWindow.Id);
+        // textbox on titlebar area
+        var transformTxtBox = frameworkElement.TransformToVisual(null);
+        var bounds = transformTxtBox.TransformBounds(new Rect(0, 0, frameworkElement.ActualWidth, frameworkElement.ActualHeight));
+        
+        // Windows.Graphics.RectInt32[] rects defines the area which allows click throughs in custom titlebar
+        // it is non dpi-aware client coordinates. Hence, we convert dpi aware coordinates to non-dpi coordinates
+        // var scale = WindowHelper.GetRasterizationScaleForElement(MainWindow);
+        
+        var transparentRect = new Windows.Graphics.RectInt32 {
+            X = (int)Math.Round(bounds.X),
+            Y = (int)Math.Round(bounds.Y),
+            Width = (int)Math.Round(bounds.Width),
+            Height = (int)Math.Round(bounds.Height)
+        };
+        
+        var rects = new[] { transparentRect };
+        nonClientInputSrc.SetRegionRects(NonClientRegionKind.Passthrough, rects);
+        
+    }
     private async Task LoadNavigation() {
         var galleryService = Service.GetKeyedService<IGalleryService>(Settings.Source)!;
         var chapters = await galleryService.Chapters(Settings.SourcePath);
@@ -68,7 +95,7 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
         
         navigationView.Expanding += async (sender, args) => {
             var navigationViewItem = args.ExpandingItem as UIControls.NavigationViewItem;
-            if (navigationViewItem?.MenuItems.Count>0) 
+            if (navigationViewItem?.MenuItems.Count > 0)
                 return;
             if (navigationViewItem?.Tag is NavigationTag<Chapter> { Parameter.Payload.Dir: not null } navigationTag) {
                 var galleryService = Service.GetKeyedService<IGalleryService>(Settings.Source)!;
@@ -124,6 +151,7 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
         }
         
     }
+    
 }
 
 public partial record MainViewModel : BaseViewModel {

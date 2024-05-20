@@ -8,7 +8,9 @@ public static class Storage {
     public static async Task SaveImage(StorageSaveImageData storageSaveImageData) {
         var imageBytes = storageSaveImageData.ImageBytes;
         
-        var folderFromPath = await StorageFolder.GetFolderFromPathAsync(storageSaveImageData.Dir);
+        var directoryName = Path.GetDirectoryName(storageSaveImageData.FullName);
+        
+        var folderFromPath = await StorageFolder.GetFolderFromPathAsync(directoryName);
         var storageFile = await folderFromPath.CreateFileAsync(storageSaveImageData.FileName);
         using var randomAccessStream =
             await storageFile.OpenAsync(FileAccessMode.ReadWrite, StorageOpenOptions.AllowReadersAndWriters);
@@ -39,7 +41,7 @@ public class StorageSaveImageData(string filename) {
     public byte[]? ImageBytes { get; init; }
     public int PixelWidth { get; init; }
     public int PixelHeight { get; init; }
-    public string Dir { get; set; }
+    public string FullName { get; init; }
     public UI.Xaml.Media.Imaging.BitmapImage? Image { get; init; }
     public string FileName { get; init; } = filename;
 }

@@ -19,7 +19,7 @@ public partial class GalleryPage {
                         .Height(300).Width(400)
                         .Source()
                         .Bind(vm?.SaveData?.Image),
-                        TextBlock().Bind(vm?.SaveData?.Dir,convert:(string source) => $"保存路径：{source}"),
+                        TextBlock().Bind(vm?.Chapter?.Dir,convert:(string source) => $"保存路径：{source}"),
                         TextBox().Header("文件名").Bind(vm?.SaveData?.FileName),
                         CheckBox("添加到Git")
                     ).Spacing(24)
