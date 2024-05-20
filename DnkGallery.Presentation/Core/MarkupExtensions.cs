@@ -11,12 +11,11 @@ internal static class MarkupExtensions {
 internal static class MarkupHelpers {
     internal static BitmapIcon Icon(string appAsset) => BitmapIcon(UriSource: new Uri($"ms-appx:///Assets/{appAsset}.png"));
     
-    internal static BitmapImage ByteArrayConvertToBitmapImage(byte[] bytes) => ByteArrayToBitmapImage(bytes);
-    internal static BitmapImage ByteArrayToBitmapImage(byte[] array) {
+    internal static UI.Xaml.Media.Imaging.BitmapImage ByteArrayConvertToBitmapImage(byte[] bytes) {
         var image = new UI.Xaml.Media.Imaging.BitmapImage();
         using var stream = new InMemoryRandomAccessStream();
         using var writer = new DataWriter(stream);
-        writer.WriteBytes(array);
+        writer.WriteBytes(bytes);
         writer.StoreAsync().GetAwaiter().GetResult();
         writer.FlushAsync().GetAwaiter().GetResult();
         writer.DetachStream();

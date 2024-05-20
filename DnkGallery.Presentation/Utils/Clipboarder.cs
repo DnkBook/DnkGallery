@@ -6,13 +6,20 @@ namespace DnkGallery.Presentation.Utils;
 public static class Clipboarder {
     public static void CopyImage(IRandomAccessStream randomAccessStream) {
         var dataPackage = new DataPackage();
-        
         var randomAccessStreamReference = RandomAccessStreamReference.CreateFromStream(randomAccessStream);
         dataPackage.SetBitmap(randomAccessStreamReference);
         Clipboard.SetContent(dataPackage);
     }
     
-    public static async Task<(UI.Xaml.Media.Imaging.BitmapImage? image, Stream? stream)> PasteImage() {
+    public static async Task CopyImage(byte[] imageBytes) {
+        var randomAccessStream = new InMemoryRandomAccessStream();
+        var stream = randomAccessStream.AsStream();
+        await stream.WriteAsync(imageBytes);
+        await stream.FlushAsync();
+        CopyImage(randomAccessStream);
+    }
+    
+    public static async Task<(UI.Xaml.Media.Imaging.BitmapImage? image, byte[]?)> PasteImage() {
         var dataPackageView = Clipboard.GetContent();
         //判断是否是图片
         if (!dataPackageView.Contains(StandardDataFormats.Bitmap))
@@ -29,7 +36,11 @@ public static class Clipboarder {
         // 保存到WriteableBitmap获得流后面用于保存
         var writeableBitmap = new UI.Xaml.Media.Imaging.WriteableBitmap(bitmapImage.PixelWidth, bitmapImage.PixelHeight);
         await writeableBitmap.SetSourceAsync(randomAccessStreamWithContentType);
-        var stream = writeableBitmap.PixelBuffer.AsStream();
-        return (bitmapImage, stream);
+        var writeableBitmapPixelBuffer = writeableBitmap.PixelBuffer;
+        using var dataReader = DataReader.FromBuffer(writeableBitmapPixelBuffer);
+        var bytes = new byte[writeableBitmapPixelBuffer.Length];
+        dataReader.ReadBytes(bytes);
+        
+        return (bitmapImage, bytes);
     }
 }
