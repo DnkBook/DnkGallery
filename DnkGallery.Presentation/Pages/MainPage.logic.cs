@@ -50,7 +50,7 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
             Name = chapter.Name,
             Content = chapter.Name,
             Header = chapter.Name,
-            HasChilren = chapter.HasChildren,
+            HasChildren = chapter.HasChildren,
             Page = typeof(GalleryPage),
             Anchors = chapter.Anchors,
             Icon = UIControls.Symbol.Calendar,

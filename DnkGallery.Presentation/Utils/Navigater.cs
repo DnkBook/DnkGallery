@@ -83,7 +83,7 @@ public static class Navigater {
             model.Content,
             model.Page,
             model.Payload,
-            model.HasChilren,
+            model.HasChildren,
             model.Anchors,
             model.Header,
             model.Icon);
@@ -227,7 +227,7 @@ public class NavigationItemModel<T>() {
     public required string Name { get; set; }
     public required string Content { get; set; }
     public required string Header { get; set; }
-    public bool HasChilren { get; set; }
+    public bool HasChildren { get; set; }
     public UIControls.Symbol Icon { get; set; }
     public required Type Page { get; set; }
     public string[] Anchors { get; set; } = [];
