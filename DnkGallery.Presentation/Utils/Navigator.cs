@@ -7,7 +7,7 @@ namespace DnkGallery.Presentation.Utils;
 /// <summary>
 /// 导航相关方法
 /// </summary>
-public static class Navigater {
+public static class Navigator {
     private static UIControls.NavigationView? _navigationView;
     private static UIControls.Frame? _frame;
     public static UIControls.NavigationView NavigationView => _navigationView ?? throw new InvalidOperationException();

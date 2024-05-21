@@ -20,16 +20,17 @@ partial class MainPage {
         .VerticalAlignment(VerticalAlignment.Top)
         .Padding(0);
     
-    public void BuildUI() => Content(Grid(AppTitleBar("DnkGallery"),
-        NavigationView(
+    public void BuildUI() => Content(
+        Grid(AppTitleBar("DnkGallery"),
+            NavigationView(
                 Frame().Assign(out frame).Invoke(FrameInvoke))
                 .PaneHeader(
                     HStack(
                         HyperlinkButton(FontIcon(FontSize:14).Glyph("\uE895"))
-                            .ToolTipService_ToolTip("同步").Height(36),
+                            .ToolTipService_ToolTip("同步").Height(36).BindCommand(vm?.GitPull),
                         HyperlinkButton(FontIcon(FontSize:14).Glyph("\uE8AD"))
                             .Height(36)
-                            .ToolTipService_ToolTip("推送")
+                            .ToolTipService_ToolTip("推送").BindCommand(vm?.GitPush)
                     ).Height(44).Assign(out hstack).Margin(16,0)
                 )
                 .IsBackEnabled(true)
@@ -40,7 +41,7 @@ partial class MainPage {
             // .Bind(vm?.MenuItems)
             // .MenuItemTemplate(MenuItemTemplate)
             
-        )
+        ).Invoke(GridInvoke)
     );
     
     

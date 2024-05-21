@@ -31,7 +31,7 @@ public class GithubApi(GitHubClient githubClient) : IGitApi {
         await Task.Run(() => Repository.Clone($"{Domain}{Path.AltDirectorySeparatorChar}{repos}", localPath));
     }
     
-    public async Task<MergeResult> Pull(string localReposPath, Identity identity, string? remoteName = default) {
+    public async Task<MergeResult> Pull(string localReposPath, Identity identity) {
         using var repo = new Repository(localReposPath);
         var mergeResult = await Task.Run(() => {
             var result = Commands.Pull(repo, new Signature(identity, DateTimeOffset.Now),
