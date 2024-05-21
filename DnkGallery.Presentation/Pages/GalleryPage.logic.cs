@@ -33,7 +33,7 @@ public sealed partial class GalleryPage : BasePage<BindableGalleryViewModel>, IB
             
             var immutableList = await vm.Model.Anas.Value(CancellationToken.None);
             
-            Navigater.Navigate(ana.Path, typeof(AnaViewerPage), ana.Name,
+            Navigator.Navigate(ana.Path, typeof(AnaViewerPage), ana.Name,
                 new NavigationParameter<(IImmutableList<Ana> Anas, Ana ana, int SelectedIndex)>(ana.Path, [], (immutableList, ana, gridView.SelectedIndex)));
         };
     }

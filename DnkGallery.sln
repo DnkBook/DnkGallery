@@ -18,6 +18,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DnkGallery.Presentation", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DnkGallery.Model", "DnkGallery.Model\DnkGallery.Model.csproj", "{00A21580-5D8B-4713-80A1-9DADAAD4A915}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DnkGallery.Test", "DnkGallery.Test\DnkGallery.Test.csproj", "{6C80921C-82A5-4218-9B14-2FE9C74EBAAD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,6 +40,10 @@ Global
 		{00A21580-5D8B-4713-80A1-9DADAAD4A915}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{00A21580-5D8B-4713-80A1-9DADAAD4A915}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{00A21580-5D8B-4713-80A1-9DADAAD4A915}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6C80921C-82A5-4218-9B14-2FE9C74EBAAD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6C80921C-82A5-4218-9B14-2FE9C74EBAAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6C80921C-82A5-4218-9B14-2FE9C74EBAAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6C80921C-82A5-4218-9B14-2FE9C74EBAAD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
