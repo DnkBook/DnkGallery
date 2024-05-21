@@ -22,6 +22,7 @@ public static class Navigater {
         _navigationView = navigationView;
         _frame = frame;
     }
+    
     /// <summary>
     /// 创建导航条目
     /// </summary>
@@ -41,12 +42,14 @@ public static class Navigater {
         bool hasChildren,
         string[] anchors,
         string? header = default,
-        UIControls.Symbol icon = UIControls.Symbol.Calendar) {
+        UIControls.Symbol icon = UIControls.Symbol.Calendar,
+        NavigationViewItemType type = NavigationViewItemType.Main
+    ) {
         return new UIControls.NavigationViewItem {
             Content = content,
             Icon = new UIControls.SymbolIcon(icon),
             Tag = new NavigationTag<TParameter>(name, page, header ?? content,
-                new NavigationParameter<TParameter>(name, anchors, payload)),
+                new NavigationParameter<TParameter>(name, anchors, payload, type)),
             HasUnrealizedChildren = hasChildren
         };
     }
@@ -78,7 +81,8 @@ public static class Navigater {
     /// <param name="model"></param>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
-    public static UIControls.NavigationViewItem NavigationItemModelToNavigationViewItem<T>(NavigationItemModel<T> model) =>
+    public static UIControls.NavigationViewItem
+        NavigationItemModelToNavigationViewItem<T>(NavigationItemModel<T> model) =>
         CreateNavigationViewItem(model.Name,
             model.Content,
             model.Page,
@@ -86,7 +90,8 @@ public static class Navigater {
             model.HasChildren,
             model.Anchors,
             model.Header,
-            model.Icon);
+            model.Icon,
+            model.Type);
     
     /// <summary>
     /// 查找导航条目
@@ -95,16 +100,25 @@ public static class Navigater {
     /// <returns></returns>
     public static UIControls.NavigationViewItem? FindNavigationViewItem(PageStackEntry pageStackEntry) {
         var navigationParameter = pageStackEntry.Parameter as NavigationParameter;
-        if (navigationParameter?.Anchors is null) {
-            return FindNavigationViewItem(NavigationView.MenuItems, pageStackEntry.SourcePageType, navigationParameter?.Name);
+        
+        var menusItems =  navigationParameter.Type switch {
+            NavigationViewItemType.Main => NavigationView.MenuItems,
+            NavigationViewItemType.Footer => NavigationView.FooterMenuItems,
+            _ => default
+        };
+        
+        if (navigationParameter?.Anchors is null or { Length: 0 }) {
+            return FindNavigationViewItem(menusItems,
+                pageStackEntry.SourcePageType, navigationParameter.Name);
         }
         
-        ICollection<object> items = [..NavigationView.MenuItems];
+        ICollection<object> items = [..menusItems];
         UIControls.NavigationViewItem? item = default;
         foreach (var navigationParameterAnchor in navigationParameter.Anchors) {
             item = FindNavigationViewItem(items, pageStackEntry.SourcePageType, navigationParameterAnchor);
             items = [..item?.MenuItems ?? []];
         }
+        
         return item;
     }
     
@@ -124,6 +138,7 @@ public static class Navigater {
             return pageEquals && nameEquals;
         }) as UIControls.NavigationViewItem;
     }
+    
     /// <summary>
     /// 回退时导航条目同步选中，神金
     /// </summary>
@@ -155,13 +170,15 @@ public static class Navigater {
     /// <param name="navigationViewItem">导航条目</param>
     /// <param name="navigationTransitionInfo">动画参数</param>
     /// <typeparam name="TParameter">参数类型</typeparam>
-    public static void Navigate<TParameter>(UIControls.NavigationViewItem navigationViewItem, NavigationTransitionInfo? navigationTransitionInfo = default) {
+    public static void Navigate<TParameter>(UIControls.NavigationViewItem navigationViewItem,
+        NavigationTransitionInfo? navigationTransitionInfo = default) {
         var navigationTag = navigationViewItem.Tag as NavigationTag<TParameter>;
         NavigationView.Header = navigationTag?.Header;
         NavigationView.SelectedItem = navigationViewItem;
         Frame.Name = navigationTag?.Name;
         Frame.Navigate(navigationTag?.Page, navigationTag?.Parameter, navigationTransitionInfo);
     }
+    
     /// <summary>
     /// 导航
     /// </summary>
@@ -171,12 +188,14 @@ public static class Navigater {
     /// <param name="parameter">参数</param>
     /// <param name="navigationTransitionInfo">动画参数</param>
     /// <typeparam name="TParameter">参数类型</typeparam>
-    public static void Navigate<TParameter>(string name, Type page, string header, NavigationParameter<TParameter>? parameter = default,
+    public static void Navigate<TParameter>(string name, Type page, string header,
+        NavigationParameter<TParameter>? parameter = default,
         NavigationTransitionInfo? navigationTransitionInfo = default) {
         NavigationView.Header = header;
         Frame.Name = name;
         Frame.Navigate(page, parameter, navigationTransitionInfo);
     }
+    
     /// <summary>
     /// 导航
     /// </summary>
@@ -184,7 +203,8 @@ public static class Navigater {
     /// <param name="page">页面</param>
     /// <param name="header">页头</param>
     /// <param name="navigationTransitionInfo">动画参数</param>
-    public static void Navigate(string name, Type page, string header, NavigationTransitionInfo? navigationTransitionInfo = default) {
+    public static void Navigate(string name, Type page, string header,
+        NavigationTransitionInfo? navigationTransitionInfo = default) {
         NavigationView.Header = header;
         Frame.Name = name;
         Frame.Navigate(page, null, navigationTransitionInfo);
@@ -198,15 +218,38 @@ public static class Navigater {
     /// <param name="hasChildrenPredicate"></param>
     /// <param name="addChildrenFunc"></param>
     /// <param name="parentNavigationViewItem"></param>
-    public static async Task AddNavigationMenuItems<T>(IEnumerable<NavigationItemModel<T>> navigationItemModel, 
+    public static async Task AddNavigationMenuItems<T>(IEnumerable<NavigationItemModel<T>> navigationItemModel,
         UIControls.NavigationViewItem? parentNavigationViewItem = default) {
+        AddNavigationMenusItems(navigationItemModel,
+            navigationViewItems => NavigationView.MenuItems.AddRange(navigationViewItems),
+            parentNavigationViewItem);
+    }
+    
+    
+    /// <summary>
+    /// 设置脚步项目
+    /// </summary>
+    /// <param name="navigationItemModel"></param>
+    /// <param name="hasChildrenPredicate"></param>
+    /// <param name="addChildrenFunc"></param>
+    /// <param name="parentNavigationViewItem"></param>
+    public static async Task AddFooterNavigationMenuItems<T>(IEnumerable<NavigationItemModel<T>> navigationItemModel,
+        UIControls.NavigationViewItem? parentNavigationViewItem = default) {
+        AddNavigationMenusItems(navigationItemModel,
+            navigationViewItems => NavigationView.FooterMenuItems.AddRange(navigationViewItems),
+            parentNavigationViewItem,NavigationViewItemType.Footer);
+    }
+    
+    private static async Task AddNavigationMenusItems<T>(IEnumerable<NavigationItemModel<T>> navigationItemModel,
+        Action<IEnumerable<UIControls.NavigationViewItem>> rootAddAction,
+        UIControls.NavigationViewItem? parentNavigationViewItem = default,
+        NavigationViewItemType type = NavigationViewItemType.Main) {
         var navigationTag = parentNavigationViewItem?.Tag as NavigationTag<T>;
         var parentAnchors = navigationTag?.Parameter.Anchors;
         
         var navigationViewItems = navigationItemModel.Select(item => {
-            
             item.Anchors = [..parentAnchors ?? [], ..item.Anchors];
-            
+            item.Type = type;
             var navigationViewItem = NavigationItemModelToNavigationViewItem(item);
             
             return navigationViewItem;
@@ -215,15 +258,12 @@ public static class Navigater {
         if (parentNavigationViewItem is not null) {
             parentNavigationViewItem.MenuItems.AddRange(navigationViewItems);
         } else {
-            NavigationView.MenuItems.AddRange(navigationViewItems);
+            rootAddAction.Invoke(navigationViewItems);
         }
     }
-    
-
 }
 
 public class NavigationItemModel<T>() {
-    
     public required string Name { get; set; }
     public required string Content { get; set; }
     public required string Header { get; set; }
@@ -231,14 +271,28 @@ public class NavigationItemModel<T>() {
     public UIControls.Symbol Icon { get; set; }
     public required Type Page { get; set; }
     public string[] Anchors { get; set; } = [];
-    
     public required T Payload { get; set; }
+    
+    public NavigationViewItemType Type { get; set; }
 }
 
 public record NavigationTag(string Name, Type Page, string Header);
 
-public record NavigationTag<T>(string Name, Type Page, string Header, NavigationParameter<T> Parameter) : NavigationTag(Name, Page, Header);
+public record NavigationTag<T>(string Name, Type Page, string Header, NavigationParameter<T> Parameter)
+    : NavigationTag(Name, Page, Header);
 
-public record NavigationParameter(string Name, string[] Anchors);
+public record NavigationParameter(
+    string Name,
+    string[] Anchors,
+    NavigationViewItemType Type = NavigationViewItemType.Main);
 
-public record NavigationParameter<T>(string Name, string[] Anchors, T? Payload) : NavigationParameter(Name, Anchors);
+public record NavigationParameter<T>(
+    string Name,
+    string[] Anchors,
+    T? Payload,
+    NavigationViewItemType Type = NavigationViewItemType.Main) : NavigationParameter(Name, Anchors, Type);
+
+public enum NavigationViewItemType {
+    Main,
+    Footer
+}

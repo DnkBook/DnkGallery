@@ -85,11 +85,22 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
             Payload = chapter
         };
     
+    private static IEnumerable<NavigationItemModel<object>> CreateFooterNavigationItemModels() =>
+        [ new NavigationItemModel<object>() {
+            Name = GitPage.Header,
+            Content = GitPage.Header,
+            Header = GitPage.Header,
+            Page = typeof(GitPage),
+            Icon = UIControls.Symbol.Remote,
+            Payload = default,
+        }];
+    
     private void NavigationInvoke(UIControls.NavigationView _) {
         
         Navigater.Init(navigationView, frame);
         
         navigationView.Loaded += async (sender, args) => {
+            await Navigater.AddFooterNavigationMenuItems(CreateFooterNavigationItemModels());
             await LoadNavigation();
         };
         
