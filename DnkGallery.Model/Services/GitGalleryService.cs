@@ -27,12 +27,11 @@ public class GitGalleryService(IGitApi gitApi, Setting setting)
     
     public async IAsyncEnumerable<Ana> Anas(Chapter chapter) {
         var settingGitRepos = setting.GitRepos;
-        
         var reposContent = await gitApi.GetReposContent(settingGitRepos, chapter.Dir);
         var anas = reposContent?
             .Where(x => Ana.NameFilter(x.Name)) ?? [];
         foreach (var content in anas) {
-            var ana = await GetLocalIfNotExistsSaveIt(content.Path, async () => {
+            var ana = await GetLocalIfNotExists(content.Path, async () => {
                 var ana = new Ana(content.Name, content.Path);
                 var reposRawContent = await gitApi.GetReposRawContent(settingGitRepos, ana.Path);
                 ana.ImageBytes = reposRawContent;
@@ -49,7 +48,7 @@ public class GitGalleryService(IGitApi gitApi, Setting setting)
     /// <param name="path"></param>
     /// <param name="saveProvider"></param>
     /// <returns></returns>
-    private async Task<Ana> GetLocalIfNotExistsSaveIt(string path, Func<Task<Ana>> saveProvider) {
+    private async Task<Ana> GetLocalIfNotExists(string path, Func<Task<Ana>> provider) {
         var settingLocalPath = setting.LocalPath;
         var fullName = Path.Combine(settingLocalPath, path);
         if (File.Exists(fullName)) {
@@ -60,7 +59,7 @@ public class GitGalleryService(IGitApi gitApi, Setting setting)
             ana.LocalExists = true;
             return ana;
         }
-        var saveAna = await saveProvider.Invoke();
+        var saveAna = await provider.Invoke();
         //  SAVE ERROR 用视图层的Storage保存
         // await File.WriteAllBytesAsync(fullName, saveAna.ImageBytes);
         return saveAna;

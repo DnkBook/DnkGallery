@@ -3,6 +3,9 @@
 public class LocalGalleryService: IGalleryService {
     public async Task<IList<Chapter>> Chapters(string dir) {
         var directoryInfo = new DirectoryInfo(dir);
+        if (!directoryInfo.Exists) {
+            directoryInfo.Create();
+        }
         var chapters = await Task.Run(() => TreeChapter(directoryInfo));
         return chapters;
     }

@@ -56,7 +56,7 @@ public partial class SettingPage {
                         .ScrollViewer_VerticalScrollBarVisibility(UIControls.ScrollBarVisibility.Auto)
                         .MaxWidth(300)
                         .Text().Bind(vm?.Setting?.GitAccessToken, BindingMode.TwoWay)),
-            ], SymbolIcon(UIControls.Symbol.Help),
+            ], SymbolIcon(UIControls.Symbol.Remote),
             "Git参数",
             "Git参数设置")
     ];
