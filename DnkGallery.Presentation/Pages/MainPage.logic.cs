@@ -67,9 +67,7 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
     
     private void FrameInvoke(UIControls.Frame _) {
         frame.Navigated += (_, _) => {
-            navigationView.IsBackButtonVisible = frame.CanGoBack
-                ? UIControls.NavigationViewBackButtonVisible.Visible
-                : UIControls.NavigationViewBackButtonVisible.Collapsed;
+            navigationView.IsBackEnabled = frame.CanGoBack;
         };
     }
     
@@ -123,7 +121,7 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
             if (frame is { CanGoBack: true }) {
                 Back();
             } else {
-                navigationView.IsBackButtonVisible = UIControls.NavigationViewBackButtonVisible.Collapsed;
+                navigationView.IsBackEnabled = false;
             }
         };
         

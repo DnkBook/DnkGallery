@@ -1,11 +1,12 @@
 ﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
 using DataTemplate = CSharpMarkup.WinUI.DataTemplate;
 
 namespace DnkGallery.Presentation.Pages;
 
 partial class MainPage {
     private Grid AppTitleBar(string title) => Grid(Columns(Auto, Auto, Auto),
-            Image().Width(16).Height(16).Source(SvgImageSource(new Uri("ms-appx:///Assets/Icons/icon.png")))
+            FontIcon(new FontFamily("Segoe UI Emoji")).Glyph("🥵")
                 .HorizontalAlignment(HorizontalAlignment.Left)
                 .VCenter(),
             TextBlock()
@@ -22,15 +23,17 @@ partial class MainPage {
     public void BuildUI() => Content(Grid(AppTitleBar("DnkGallery"),
         NavigationView(
                 Frame().Assign(out frame).Invoke(FrameInvoke))
-                // .PaneHeader(
-                //     HStack(
-                //         HyperlinkButton(FontIcon(ThemeResource.PivotTitleFontFamily).Glyph("&#xE8AD;").FontSize(12))
-                //             .ToolTipService_ToolTip("同步"),
-                //         HyperlinkButton(FontIcon(ThemeResource.PivotTitleFontFamily).Glyph("&#xE8AD;").FontSize(12)),
-                //         HyperlinkButton()
-                //     ).Assign(out hstack)
-                // )
+                .PaneHeader(
+                    HStack(
+                        HyperlinkButton(FontIcon(FontSize:14).Glyph("\uE895"))
+                            .ToolTipService_ToolTip("同步").Height(36),
+                        HyperlinkButton(FontIcon(FontSize:14).Glyph("\uE8AD"))
+                            .Height(36)
+                            .ToolTipService_ToolTip("推送")
+                    ).Height(44).Assign(out hstack).Margin(16,0)
+                )
                 .IsBackEnabled(true)
+                
             .Assign(out navigationView)
             .Invoke(NavigationInvoke)
             // .MenuItemsSource()
