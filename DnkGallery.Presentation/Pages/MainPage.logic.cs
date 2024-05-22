@@ -203,7 +203,7 @@ public partial record MainViewModel : BaseViewModel {
             if (!gitApi.CheckWorkDir(Settings.LocalPath)) {
                 await gitApi.Clone(Settings.GitRepos, Settings.LocalPath);
             } else {
-                await gitApi.Pull(Settings.LocalPath, new Identity("xueque", "maqueyuxue@outlook.com"));
+                await gitApi.Pull(Settings.LocalPath, new Identity(Settings.GitUserName, Settings.GitUserName));
             }
             InfoBarManager.Show(UIControls.InfoBarSeverity.Success, GitPage.Header, "同步成功");
         } catch (Exception e) {
@@ -214,7 +214,7 @@ public partial record MainViewModel : BaseViewModel {
     public async Task GitPush() {
         try {
             var gitApi = Service.GetService<IGitApi>()!;
-            await gitApi.Push(Settings.LocalPath, new UsernamePasswordCredentials() { Username = "SparrowAndSnow", Password = Settings.GitAccessToken });
+            await gitApi.Push(Settings.LocalPath, new UsernamePasswordCredentials() { Username = Settings.GitUserName, Password = Settings.GitAccessToken });
         } catch (Exception e) {
             InfoBarManager.Show(UIControls.InfoBarSeverity.Error, GitPage.Header, e.Message);
         }

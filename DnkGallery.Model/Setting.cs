@@ -13,6 +13,7 @@ public sealed record Setting {
     
     public string GitAccessToken { get; set; }
 
+    public string GitUserName { get; set; }
     public string SourcePath => Source switch {
         Source.Local => LocalPath,
         Source.Git => Path.AltDirectorySeparatorChar.ToString(),
@@ -55,6 +56,7 @@ public sealed record Setting {
         LocalPath = setting.LocalPath;
         GitRepos = setting.GitRepos;
         GitAccessToken = setting.GitAccessToken;
+        GitUserName = setting.GitUserName;
     }
     
     public event EventHandler<Setting> SettingChanged;

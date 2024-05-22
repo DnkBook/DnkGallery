@@ -32,7 +32,7 @@ public partial record GitViewModel : BaseViewModel {
             return;
         }
         var gitApi = Service.GetService<IGitApi>()!;
-        await gitApi.Commit(Settings.LocalPath, message, new Identity("xueque", "maqueyuxue@outlook.com"));
+        await gitApi.Commit(Settings.LocalPath, message, new Identity(Settings.GitUserName, Settings.GitUserName));
     }
     
     public async Task Status() {

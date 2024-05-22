@@ -1,5 +1,4 @@
 using LibGit2Sharp;
-using LibGit2Sharp.Handlers;
 using Octokit;
 using Credentials = LibGit2Sharp.Credentials;
 using Repository = LibGit2Sharp.Repository;
