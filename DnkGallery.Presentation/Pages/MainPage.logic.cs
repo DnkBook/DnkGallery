@@ -5,9 +5,7 @@ using DnkGallery.Model.Services;
 using LibGit2Sharp;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
-using FrameworkElement = Microsoft.UI.Xaml.FrameworkElement;
 
 namespace DnkGallery.Presentation.Pages;
 
@@ -17,6 +15,7 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
     private UIControls.NavigationView navigationView;
     private UIControls.CommandBar commandBar;
     private UIControls.StackPanel hstack;
+    
     public MainPage(Window window, IHost host) {
         MainWindow = window;
         BuildUI();
@@ -31,9 +30,13 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
         // hstack.Loaded += (sender, args) => AllowsClickThrough(hstack);
 #endif
     }
+    
     private void GridInvoke(UIControls.Grid obj) {
         InfoBarManager.Init(MainWindow, obj);
+        obj.Loaded += (sender, args) => CreateAutoSyncCheck();
+        // obj.Loaded += (sender, args) => 
     }
+    
     // private void AllowsClickThrough(FrameworkElement frameworkElement) {
     //     var nonClientInputSrc = InputNonClientPointerSource.GetForWindowId(MainWindow.AppWindow.Id);
     //     // textbox on titlebar area
@@ -64,15 +67,14 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
         await Navigator.AddNavigationMenuItems(navigationItemModels);
         
         // 默认导航到第一个菜单
-        if (navigationView.MenuItems is { Count: > 0 } && navigationView.MenuItems[0] is UIControls.NavigationViewItem navigationViewMenuItem) {
+        if (navigationView.MenuItems is { Count: > 0 } &&
+            navigationView.MenuItems[0] is UIControls.NavigationViewItem navigationViewMenuItem) {
             Navigator.Navigate<Chapter>(navigationViewMenuItem);
         }
     }
     
     private void FrameInvoke(UIControls.Frame _) {
-        frame.Navigated += (_, _) => {
-            navigationView.IsBackEnabled = frame.CanGoBack;
-        };
+        frame.Navigated += (_, _) => { navigationView.IsBackEnabled = frame.CanGoBack; };
     }
     
     private static NavigationItemModel<Chapter> CreateChapterNavigationItemModel(Chapter chapter) =>
@@ -99,7 +101,6 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
     ];
     
     private void NavigationInvoke(UIControls.NavigationView _) {
-        
         Navigator.Init(navigationView, frame);
         
         navigationView.Loaded += async (sender, args) => {
@@ -132,23 +133,26 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
         
         navigationView.ItemInvoked += (sender, args) => {
             // 防止重复点击
-            if (args.InvokedItemContainer is UIControls.NavigationViewItem invokedItemContainer && Navigator.IsCurrentPage(invokedItemContainer)) {
+            if (args.InvokedItemContainer is UIControls.NavigationViewItem invokedItemContainer &&
+                Navigator.IsCurrentPage(invokedItemContainer)) {
                 return;
             }
+            
             //设置导航写死了
             if (args.IsSettingsInvoked) {
-                Navigator.Navigate(SettingPage.Header, typeof(SettingPage), SettingPage.Header, args.RecommendedNavigationTransitionInfo);
+                Navigator.Navigate(SettingPage.Header, typeof(SettingPage), SettingPage.Header,
+                    args.RecommendedNavigationTransitionInfo);
             } else
                 switch (args.InvokedItemContainer) {
                     case UIControls.NavigationViewItem { Tag: NavigationTag<Chapter> } chapterNavigationViewItem:
-                        Navigator.Navigate<Chapter>(chapterNavigationViewItem, args.RecommendedNavigationTransitionInfo);
+                        Navigator.Navigate<Chapter>(chapterNavigationViewItem,
+                            args.RecommendedNavigationTransitionInfo);
                         break;
                     case UIControls.NavigationViewItem navigationViewItem:
                         Navigator.Navigate<object>(navigationViewItem, args.RecommendedNavigationTransitionInfo);
                         break;
                 }
         };
-        
     }
     
     /// <summary>
@@ -163,21 +167,56 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
         } else {
             Navigator.Back(pageStackEntry);
         }
-        
     }
     
-    
+    private async void CreateAutoSyncCheck() {
+        await vm?.Model.Status();
+        var dispatcherQueueTimer = DispatcherQueue.CreateTimer();
+        dispatcherQueueTimer.Interval = TimeSpan.FromSeconds(5);
+        dispatcherQueueTimer.IsRepeating = true;
+        dispatcherQueueTimer.Tick += (sender, args) =>
+            DispatcherQueue.TryEnqueue(async () => {
+                try {
+                    await vm?.Model.Status();
+                }catch{}
+            });
+        dispatcherQueueTimer.Start();
+    }
 }
 
 public partial record MainViewModel : BaseViewModel {
-    
+    public IState<int> SyncCount => State<int>.Empty(this);
+    public IState<int> PushCount => State<int>.Empty(this);
+
     public async Task GitPull() {
-        var gitApi = Service.GetService<IGitApi>()!;
-        await gitApi.Pull(Settings.LocalPath, new Identity("xueque","maqueyuxue@outlook.com"));
-        InfoBarManager.Show(UIControls.InfoBarSeverity.Success, "Git", "同步成功");
+        try {
+            var gitApi = Service.GetService<IGitApi>()!;
+            await gitApi.Pull(Settings.LocalPath, new Identity("xueque", "maqueyuxue@outlook.com"));
+            InfoBarManager.Show(UIControls.InfoBarSeverity.Success, GitPage.Header, "同步成功");
+        } catch (Exception e) {
+            InfoBarManager.Show(UIControls.InfoBarSeverity.Error, GitPage.Header, e.Message);
+        }
     }
     
     public async Task GitPush() {
-        InfoBarManager.Show(UIControls.InfoBarSeverity.Error, "error", "报错啦报错非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长啦");
+        InfoBarManager.Show(UIControls.InfoBarSeverity.Error, "error",
+            "报错啦报错非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长啦");
+    }
+    
+    public async Task Status() {
+        var gitApi = Service.GetService<IGitApi>()!;
+        var repositoryStatus = await gitApi.Status(Settings.LocalPath);
+        
+        await SyncCount.Update(_ => {
+            var missingCount = repositoryStatus.Missing.Count();
+            return missingCount;
+        }, CancellationToken.None);
+        
+        await PushCount.Update(_ => {
+            var addCount = repositoryStatus.Added.Count();
+            var modifyCount = repositoryStatus.Modified.Count();
+            var removeCount = repositoryStatus.Removed.Count();
+            return addCount + modifyCount + removeCount;
+        }, CancellationToken.None);
     }
 }

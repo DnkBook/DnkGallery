@@ -1,5 +1,4 @@
 using DnkGallery.Model;
-using Microsoft.Extensions.DependencyInjection;
 namespace DnkGallery.Presentation.Pages;
 
 [UIBindable]
@@ -13,8 +12,16 @@ public partial record SettingViewModel : BaseViewModel {
     public IState<Setting> Setting => UseState(() => Settings);
     
     public async Task Save() {
-        var setting = await Setting;
-        await Settings.SaveAsync(setting);
+        try {
+            var setting = await Setting;
+            await Settings.SaveAsync(setting);
+            InfoBarManager.Show(UIControls.InfoBarSeverity.Success,SettingPage.Header,"保存成功");
+        } catch (Exception e) {
+            InfoBarManager.Show(UIControls.InfoBarSeverity.Error,SettingPage.Header,e.Message);
+            Console.WriteLine(e);
+            throw;
+        }
+
     }
     public async Task Cancel() {
         

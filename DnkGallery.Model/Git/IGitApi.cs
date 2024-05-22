@@ -9,5 +9,10 @@ public interface IGitApi {
     
     public Task Clone(string repos,string localPath);
     
-    Task<MergeResult> Pull(string localReposPath, Identity identity);
+    public Task<RepositoryStatus> Status(string localReposPath);
+    
+    public Task Fetch(string repos, string? remoteName = default, FetchOptions? options = default);
+    
+    public Task<MergeResult> Pull(string localReposPath, Identity identity);
+    
 }
