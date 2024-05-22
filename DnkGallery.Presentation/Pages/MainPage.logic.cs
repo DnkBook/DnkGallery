@@ -1,4 +1,4 @@
-﻿using Windows.Foundation;
+﻿using Windows.System.Threading;
 using DnkGallery.Model;
 using DnkGallery.Model.Github;
 using DnkGallery.Model.Services;
@@ -15,6 +15,9 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
     private UIControls.NavigationView navigationView;
     private UIControls.CommandBar commandBar;
     private UIControls.StackPanel hstack;
+    private UIControls.InfoBadge gitInfoBadge;
+    private UIControls.ContentDialog pushDialog;
+    private UIControls.HyperlinkButton pushHyperlinkButton;
     
     public MainPage(Window window, IHost host) {
         MainWindow = window;
@@ -29,14 +32,16 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
 #if WINDOWS
         // hstack.Loaded += (sender, args) => AllowsClickThrough(hstack);
 #endif
+        Loaded += (sender, args) => {
+            CreateAutoSyncCheck();
+            pushHyperlinkButton.Tapped += async (sender, args) => await pushDialog.ShowAsync();
+        };
     }
     
     private void GridInvoke(UIControls.Grid obj) {
         InfoBarManager.Init(MainWindow, obj);
-        obj.Loaded += (sender, args) => CreateAutoSyncCheck();
-        // obj.Loaded += (sender, args) => 
     }
-    
+ 
     // private void AllowsClickThrough(FrameworkElement frameworkElement) {
     //     var nonClientInputSrc = InputNonClientPointerSource.GetForWindowId(MainWindow.AppWindow.Id);
     //     // textbox on titlebar area
@@ -89,16 +94,22 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
             Payload = chapter
         };
     
-    private static IEnumerable<NavigationItemModel<object>> CreateFooterNavigationItemModels() => [
-        new NavigationItemModel<object>() {
-            Name = GitPage.Header,
-            Content = GitPage.Header,
-            Header = GitPage.Header,
-            Page = typeof(GitPage),
-            Icon = UIControls.Symbol.Remote,
-            Payload = default,
-        }
-    ];
+    private IEnumerable<NavigationItemModel<object>> CreateFooterNavigationItemModels() {
+        gitInfoBadge = InfoBadge()
+            .Value().Bind(vm?.CommitCount)
+            .Visibility().Bind(vm?.CommitCount, convert: (int count) => count > 0 ? Visibility.Visible : Visibility.Collapsed);
+        return [
+            new NavigationItemModel<object>() {
+                Name = GitPage.Header,
+                Content = GitPage.Header,
+                Header = GitPage.Header,
+                Page = typeof(GitPage),
+                Icon = UIControls.Symbol.Remote,
+                Payload = default,
+                InfoBadge = gitInfoBadge
+            }
+        ];
+    }
     
     private void NavigationInvoke(UIControls.NavigationView _) {
         Navigator.Init(navigationView, frame);
@@ -171,27 +182,29 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
     
     private async void CreateAutoSyncCheck() {
         await vm?.Model.Status();
-        var dispatcherQueueTimer = DispatcherQueue.CreateTimer();
-        dispatcherQueueTimer.Interval = TimeSpan.FromSeconds(5);
-        dispatcherQueueTimer.IsRepeating = true;
-        dispatcherQueueTimer.Tick += (sender, args) =>
+        var periodicTimer = ThreadPoolTimer.CreatePeriodicTimer((source) => {
             DispatcherQueue.TryEnqueue(async () => {
-                try {
-                    await vm?.Model.Status();
-                }catch{}
+                await vm?.Model.Status();
             });
-        dispatcherQueueTimer.Start();
+        }, TimeSpan.FromSeconds(5));
     }
+
 }
 
 public partial record MainViewModel : BaseViewModel {
     public IState<int> SyncCount => State<int>.Empty(this);
     public IState<int> PushCount => State<int>.Empty(this);
-
+    public IState<int> CommitCount => State<int>.Empty(this);
+    
     public async Task GitPull() {
         try {
             var gitApi = Service.GetService<IGitApi>()!;
-            await gitApi.Pull(Settings.LocalPath, new Identity("xueque", "maqueyuxue@outlook.com"));
+            await Status();
+            if (!gitApi.CheckWorkDir(Settings.LocalPath)) {
+                await gitApi.Clone(Settings.GitRepos, Settings.LocalPath);
+            } else {
+                await gitApi.Pull(Settings.LocalPath, new Identity("xueque", "maqueyuxue@outlook.com"));
+            }
             InfoBarManager.Show(UIControls.InfoBarSeverity.Success, GitPage.Header, "同步成功");
         } catch (Exception e) {
             InfoBarManager.Show(UIControls.InfoBarSeverity.Error, GitPage.Header, e.Message);
@@ -199,24 +212,43 @@ public partial record MainViewModel : BaseViewModel {
     }
     
     public async Task GitPush() {
-        InfoBarManager.Show(UIControls.InfoBarSeverity.Error, "error",
-            "报错啦报错非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长非常长啦");
+        try {
+            var gitApi = Service.GetService<IGitApi>()!;
+            await gitApi.Push(Settings.LocalPath, new UsernamePasswordCredentials() { Username = "SparrowAndSnow", Password = Settings.GitAccessToken });
+        } catch (Exception e) {
+            InfoBarManager.Show(UIControls.InfoBarSeverity.Error, GitPage.Header, e.Message);
+        }
+        
     }
     
     public async Task Status() {
-        var gitApi = Service.GetService<IGitApi>()!;
-        var repositoryStatus = await gitApi.Status(Settings.LocalPath);
+        try {
+            var gitApi = Service.GetService<IGitApi>()!;
+            var repositoryStatus = await gitApi.Status(Settings.LocalPath);
+            if (repositoryStatus is null) {
+                return;
+            }
+            await SyncCount.Update(_ => {
+                var missingCount = repositoryStatus.Missing.Count();
+                return missingCount;
+            }, CancellationToken.None);
+            
+            await CommitCount.Update(_ => {
+                var addCount = repositoryStatus.Added.Count();
+                var modifyCount = repositoryStatus.Modified.Count();
+                var removeCount = repositoryStatus.Removed.Count();
+                return addCount + modifyCount + removeCount;
+            }, CancellationToken.None);
+            
+            await PushCount.Update(_ => {
+                var addCount = repositoryStatus.Added.Count();
+                var modifyCount = repositoryStatus.Modified.Count();
+                var removeCount = repositoryStatus.Removed.Count();
+                return addCount + modifyCount + removeCount;
+            }, CancellationToken.None);
+        } catch (Exception e) {
+            InfoBarManager.Show(UIControls.InfoBarSeverity.Error, GitPage.Header, e.Message);
+        }
         
-        await SyncCount.Update(_ => {
-            var missingCount = repositoryStatus.Missing.Count();
-            return missingCount;
-        }, CancellationToken.None);
-        
-        await PushCount.Update(_ => {
-            var addCount = repositoryStatus.Added.Count();
-            var modifyCount = repositoryStatus.Modified.Count();
-            var removeCount = repositoryStatus.Removed.Count();
-            return addCount + modifyCount + removeCount;
-        }, CancellationToken.None);
     }
 }

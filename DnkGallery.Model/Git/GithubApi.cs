@@ -33,7 +33,18 @@ public class GithubApi(GitHubClient githubClient) : IGitApi {
         await Task.Run(() => Repository.Clone($"{Domain}{Path.AltDirectorySeparatorChar}{repos}", localPath));
     }
     
-    public async Task<RepositoryStatus> Status(string localReposPath) {
+    public bool CheckWorkDir(string localReposPath) {
+        try {
+            return Directory.Exists(localReposPath) && Repository.IsValid(localReposPath);
+        } catch {
+            return false;
+        }
+    }
+    
+    public async Task<RepositoryStatus?> Status(string localReposPath) {
+        if (!CheckWorkDir(localReposPath)) {
+            return null;
+        }
         var repositoryStatus = await Task.Run(() => {
             using var repository = new Repository(localReposPath);
             var retrieveStatus = repository.RetrieveStatus();
@@ -47,30 +58,47 @@ public class GithubApi(GitHubClient githubClient) : IGitApi {
             using var repo = new Repository(localReposPath);
             var result = Commands.Pull(repo, new Signature(identity, DateTimeOffset.Now),
                 new PullOptions()
-                    // { MergeOptions = new MergeOptions() { FastForwardStrategy = FastForwardStrategy.Default } }
-                );
+                // { MergeOptions = new MergeOptions() { FastForwardStrategy = FastForwardStrategy.Default } }
+            );
             return result;
         });
         return mergeResult;
     }
     
-    public async Task Push(string localReposPath, string? remoteName = "origin") {
-        var repo = new Repository(localReposPath);
-        var remote = repo.Network.Remotes[remoteName];
-        
-        UsernamePasswordCredentials credentials = new UsernamePasswordCredentials {Username = "*******", Password = "******"};
-        var certificateCheckHandler = new CertificateCheckHandler((certificate, valid, host) => {
-            
-            return valid;
+    public async Task Push(string localReposPath, Credentials credentials, string? remoteName = "origin") {
+        await Task.Run(() => {
+            var repo = new Repository(localReposPath);
+            var remote = repo.Network.Remotes[remoteName];
+            var options = new PushOptions {
+                CredentialsProvider = (url, usernameFromUrl, types) => credentials,
+            };
+            //
+            // var psuhRefSpaces = remote.PushRefSpecs.Select(x => x.Specification);
+            repo.Network.Push(remote, repo.Refs.Head.TargetIdentifier, options);
         });
-        var options = new PushOptions();
-        options.CertificateCheck = certificateCheckHandler;
-        var pushRefSpec = string.Format("+{0}:{0}","refs/remotes/github/");
-        repo.Network.Push(remote, pushRefSpec, options);
     }
     
-    public async Task Commit(string localReposPath, string message,Identity identity) {
-        var repo = new Repository(localReposPath);
-        repo.Commit(message,new Signature(identity, DateTimeOffset.Now),new Signature(identity, DateTimeOffset.Now));
+    public async Task PullRequest(string repos,string accessToken,string title,string branch) {
+        githubClient.Credentials = new Octokit.Credentials(accessToken);
+        var strings = repos.Split(Path.AltDirectorySeparatorChar);
+        var repository = await githubClient.Repository.Get(strings[0], strings[1]);
+        var defaultBranch = await githubClient.Git.Reference.Get(repository.Id, branch);
+        var featureBranch = await githubClient.Git.Reference.Create(repository.Id, new NewReference(branch, defaultBranch.Object.Sha));
+        var newPullRequest = new NewPullRequest(title, featureBranch.Ref, defaultBranch.Ref);
+        var pullRequest = await githubClient.PullRequest.Create(repository.Id, newPullRequest);
+    }
+    
+    public async Task Commit(string localReposPath, string message, Identity identity) {
+        await Task.Run(() => {
+            var repo = new Repository(localReposPath);
+            var commitOptions = new CommitOptions();
+            repo.Commit(message, new Signature(identity, DateTimeOffset.Now), new Signature(identity, DateTimeOffset.Now),commitOptions);
+        });
+    }
+    public async Task Add(string localReposPath, IEnumerable<string> file) {
+        await Task.Run(() => {
+            var repo = new Repository(localReposPath);
+            Commands.Stage(repo, file);
+        });
     }
 }

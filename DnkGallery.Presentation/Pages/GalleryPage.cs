@@ -22,7 +22,7 @@ public partial class GalleryPage {
                                 .Bind(vm?.SaveData?.Image),
                             TextBlock().Bind(vm?.Chapter?.Dir, convert: (string source) => $"保存路径：{source}"),
                             TextBox().Header("文件名").Bind(vm?.SaveData?.FileName),
-                            CheckBox("添加到Git")
+                            CheckBox("添加到Git").Bind(vm?.AddToGit)
                         ).Spacing(24)
                     )
                     .XamlRoot(MainWindow.Content.XamlRoot)

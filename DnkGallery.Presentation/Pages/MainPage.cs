@@ -32,16 +32,18 @@ partial class MainPage {
                                 .ToolTipService_ToolTip("同步").Height(36).BindCommand(vm?.GitPull),
                                 InfoBadge()
                                     .Value().Bind(vm?.SyncCount)
+                                    .Visibility().Bind(vm?.SyncCount, convert: (int count) => count > 0 ? Visibility.Visible : Visibility.Collapsed)
                                     .HorizontalAlignment(HorizontalAlignment.Right)
                                     .VerticalAlignment(VerticalAlignment.Top)
                         ),
                         
                         Grid(
                             HyperlinkButton(FontIcon(FontSize: 14).Glyph("\uE8AD"))
-                                .Height(36)
-                                .ToolTipService_ToolTip("推送").BindCommand(vm?.GitPush),
+                                .Height(36).Assign(out pushHyperlinkButton)
+                                .ToolTipService_ToolTip("推送"),
                             InfoBadge()
                                 .Value().Bind(vm?.PushCount)
+                                .Visibility().Bind(vm?.PushCount, convert: (int count) => count > 0 ? Visibility.Visible : Visibility.Collapsed)
                                 .HorizontalAlignment(HorizontalAlignment.Right)
                                 .VerticalAlignment(VerticalAlignment.Top)
                         )
@@ -49,10 +51,22 @@ partial class MainPage {
                 )
                 .IsBackEnabled(true)
                 .Assign(out navigationView)
-                .Invoke(NavigationInvoke)
+                .Invoke(NavigationInvoke),
             // .MenuItemsSource()
             // .Bind(vm?.MenuItems)
             // .MenuItemTemplate(MenuItemTemplate)
+            ContentDialog(
+                VStack(
+           
+                    ).Spacing(24)
+                )
+                .XamlRoot(XamlRoot)
+                .Title("推送")
+                .PrimaryButtonText("推送")
+                .PrimaryButtonCommand().Bind(vm?.GitPush)
+                .DefaultButton(UIControls.ContentDialogButton.Primary)
+                .SecondaryButtonText("取消")
+                .Assign(out pushDialog)
         ).Invoke(GridInvoke)
     );
     

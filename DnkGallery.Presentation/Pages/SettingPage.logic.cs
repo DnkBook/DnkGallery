@@ -18,8 +18,6 @@ public partial record SettingViewModel : BaseViewModel {
             InfoBarManager.Show(UIControls.InfoBarSeverity.Success,SettingPage.Header,"保存成功");
         } catch (Exception e) {
             InfoBarManager.Show(UIControls.InfoBarSeverity.Error,SettingPage.Header,e.Message);
-            Console.WriteLine(e);
-            throw;
         }
 
     }
