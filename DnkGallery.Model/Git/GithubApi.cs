@@ -1,6 +1,5 @@
 using LibGit2Sharp;
 using Octokit;
-using Credentials = LibGit2Sharp.Credentials;
 using Repository = LibGit2Sharp.Repository;
 using Signature = LibGit2Sharp.Signature;
 
@@ -21,9 +20,9 @@ public class GithubApi(GitHubClient githubClient) : IGitApi {
         return rawContent;
     }
     
-    public async Task Fetch(string localReposPath, string? remoteName = default, FetchOptions? options = default) {
+    public async Task Fetch(string localReposPath, string? remoteName = default) {
         using var repository = new Repository(localReposPath);
-        options ??= new FetchOptions();
+        var options = new FetchOptions();
         var headRemoteName = remoteName ?? repository.Head.RemoteName;
         Commands.Fetch(repository, headRemoteName, [], options, null);
     }
@@ -44,6 +43,7 @@ public class GithubApi(GitHubClient githubClient) : IGitApi {
         if (!CheckWorkDir(localReposPath)) {
             return null;
         }
+        
         var repositoryStatus = await Task.Run(() => {
             using var repository = new Repository(localReposPath);
             var retrieveStatus = repository.RetrieveStatus();
@@ -52,10 +52,11 @@ public class GithubApi(GitHubClient githubClient) : IGitApi {
         return repositoryStatus;
     }
     
-    public async Task<MergeResult> Pull(string localReposPath, Identity identity) {
+    public async Task<MergeResult> Pull(string localReposPath, string userName, string? email = default) {
         var mergeResult = await Task.Run(() => {
             using var repo = new Repository(localReposPath);
-            var result = Commands.Pull(repo, new Signature(identity, DateTimeOffset.Now),
+            var result = Commands.Pull(repo,
+                new Signature(new Identity(userName, email ?? userName), DateTimeOffset.Now),
                 new PullOptions()
                 // { MergeOptions = new MergeOptions() { FastForwardStrategy = FastForwardStrategy.Default } }
             );
@@ -64,40 +65,64 @@ public class GithubApi(GitHubClient githubClient) : IGitApi {
         return mergeResult;
     }
     
-    public async Task Push(string localReposPath, Credentials credentials, string? remoteName = "origin") {
+    public async Task Push(string localReposPath, string userName, string accessToken, string? remoteName = "origin") {
         await Task.Run(() => {
             var repo = new Repository(localReposPath);
             var remote = repo.Network.Remotes[remoteName];
             var options = new PushOptions {
-                CredentialsProvider = (url, usernameFromUrl, types) => credentials,
+                CredentialsProvider = (url, usernameFromUrl, types) => new UsernamePasswordCredentials() {
+                    Username = userName,
+                    Password = accessToken
+                },
             };
-            //
-            // var psuhRefSpaces = remote.PushRefSpecs.Select(x => x.Specification);
             repo.Network.Push(remote, repo.Refs.Head.TargetIdentifier, options);
         });
     }
     
-    public async Task PullRequest(string repos,string accessToken,string title,string branch) {
+    public async Task PullRequest(string repos, string accessToken, string title, string branch) {
         githubClient.Credentials = new Octokit.Credentials(accessToken);
         var strings = repos.Split(Path.AltDirectorySeparatorChar);
         var repository = await githubClient.Repository.Get(strings[0], strings[1]);
         var defaultBranch = await githubClient.Git.Reference.Get(repository.Id, branch);
-        var featureBranch = await githubClient.Git.Reference.Create(repository.Id, new NewReference(branch, defaultBranch.Object.Sha));
+        var featureBranch =
+            await githubClient.Git.Reference.Create(repository.Id, new NewReference(branch, defaultBranch.Object.Sha));
         var newPullRequest = new NewPullRequest(title, featureBranch.Ref, defaultBranch.Ref);
         var pullRequest = await githubClient.PullRequest.Create(repository.Id, newPullRequest);
     }
     
-    public async Task Commit(string localReposPath, string message, Identity identity) {
+    public async Task Commit(string localReposPath, string message, string userName, string? email = default) {
         await Task.Run(() => {
             var repo = new Repository(localReposPath);
             var commitOptions = new CommitOptions();
-            repo.Commit(message, new Signature(identity, DateTimeOffset.Now), new Signature(identity, DateTimeOffset.Now),commitOptions);
+            repo.Commit(message, new Signature(new Identity(userName, email ?? userName), DateTimeOffset.Now),
+                new Signature(userName, email ?? userName, DateTimeOffset.Now), commitOptions);
         });
     }
+    
+    
+    public async Task<ICommitLog> BeingPushedCommits(string localReposPath) {
+        return await Task.Run(() => {
+            var repo = new Repository(localReposPath);
+            var trackingBranch = repo.Head.TrackedBranch;
+            var log = repo.Commits.QueryBy(new CommitFilter()
+                { IncludeReachableFrom = repo.Head.Tip.Id, ExcludeReachableFrom = trackingBranch.Tip.Id });
+            return log;
+        });
+    }
+    
+    public async Task<IQueryableCommitLog> Commits(string localReposPath) {
+        return await Task.Run(() => {
+            var repo = new Repository(localReposPath);
+            var log = repo.Commits;
+            return log;
+        });
+    }
+    
     public async Task Add(string localReposPath, IEnumerable<string> file) {
         await Task.Run(() => {
             var repo = new Repository(localReposPath);
             Commands.Stage(repo, file);
         });
     }
+    
 }

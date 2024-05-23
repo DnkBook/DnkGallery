@@ -1,4 +1,6 @@
-﻿using Microsoft.UI.Xaml;
+﻿using LibGit2Sharp;
+using Microsoft.UI.Text;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using DataTemplate = CSharpMarkup.WinUI.DataTemplate;
 
@@ -57,11 +59,24 @@ partial class MainPage {
             // .MenuItemTemplate(MenuItemTemplate)
             ContentDialog(
                 VStack(
-           
+                      ListView(() => 
+                          VStack(
+                            TextBlock().Bind("MessageShort"),
+                                HStack(
+                                TextBlock().Bind("Committer")
+                                    .FontSize(12).FontWeight(FontWeights.Bold),
+                                    TextBlock()
+                                        .Bind("Committer", 
+                                            convert:(Signature signature)=>
+                                                signature.When.ToString("yyyy-MM-dd HH:mm:ss"))
+                                        .FontSize(12)
+                                )
+                            ).Padding(8)
+                          ).ItemsSource().Bind(vm?.BeingPushedCommits)  
                     ).Spacing(24)
                 )
                 .XamlRoot(XamlRoot)
-                .Title("推送")
+                .Title(GitPage.Header)
                 .PrimaryButtonText("推送")
                 .PrimaryButtonCommand().Bind(vm?.GitPush)
                 .DefaultButton(UIControls.ContentDialogButton.Primary)

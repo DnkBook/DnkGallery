@@ -23,7 +23,10 @@ public partial class GitPage {
                    .MaxHeight(200)
                    .ScrollViewer_VerticalScrollBarVisibility(UIControls.ScrollBarVisibility.Auto)
                    .Text().Bind(vm?.Message, BindingMode.TwoWay),
-               Button("提交").BindCommand(vm?.Commit)
+               HStack(
+                   
+                   Button("提交").BindCommand(vm?.Commit)
+                   )
                ).Spacing(16).Grid_Row(1)
         ).Margin(24)
     ).Invoke(ContentInvoke);

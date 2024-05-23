@@ -26,13 +26,19 @@ public partial record GitViewModel : BaseViewModel {
     public IListState<Ana> AddedAnas => ListState<Ana>.Empty(this);
     public IState<string> Message => State<string>.Value(this,() => "feat: add anas");
     public async Task Commit() {
-        var message = await Message;
-        if (string.IsNullOrWhiteSpace(message)) {
-            InfoBarManager.Show(UIControls.InfoBarSeverity.Warning, GitPage.Header, "缺失提交信息");
-            return;
+        try {
+            var message = await Message;
+            if (string.IsNullOrWhiteSpace(message)) {
+                InfoBarManager.Show(UIControls.InfoBarSeverity.Warning, GitPage.Header, "缺失提交信息");
+                return;
+            }
+            var gitApi = Service.GetService<IGitApi>()!;
+            await gitApi.Commit(Settings.LocalPath, message, Settings.GitUserName);
+            InfoBarManager.Show(UIControls.InfoBarSeverity.Success, GitPage.Header, "提交成功");
+            await Status();
+        } catch (Exception e) {
+            InfoBarManager.Show(UIControls.InfoBarSeverity.Error, GitPage.Header, e.Message);
         }
-        var gitApi = Service.GetService<IGitApi>()!;
-        await gitApi.Commit(Settings.LocalPath, message, new Identity(Settings.GitUserName, Settings.GitUserName));
     }
     
     public async Task Status() {

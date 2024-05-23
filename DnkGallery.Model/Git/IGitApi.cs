@@ -12,17 +12,20 @@ public interface IGitApi {
     
     public Task<RepositoryStatus?> Status(string localReposPath);
     
-    public Task Fetch(string repos, string? remoteName = default, FetchOptions? options = default);
+    public Task Fetch(string repos, string? remoteName = "origin");
     
-    public Task<MergeResult> Pull(string localReposPath, Identity identity);
+    public Task<MergeResult> Pull(string localReposPath, string userName, string? email = default);
     
     public Task PullRequest(string repos, string accessToken, string title, string branch);
     
     public bool CheckWorkDir(string localReposPath);
     
-    public Task Push(string localReposPath, Credentials credentials, string? remoteName = "origin");
+    public Task Push(string localReposPath, string userName,string accessToken, string? remoteName = "origin");
     
-    public Task Commit(string localReposPath, string message, Identity identity);
+    public Task Commit(string localReposPath, string message, string userName, string? email = default);
     
     public Task Add(string localReposPath, IEnumerable<string> file);
+    
+    public Task<ICommitLog> BeingPushedCommits(string localReposPath);
+    public Task<IQueryableCommitLog> Commits(string localReposPath);
 }
