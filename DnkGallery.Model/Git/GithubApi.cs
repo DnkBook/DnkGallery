@@ -1,5 +1,6 @@
 using LibGit2Sharp;
 using Octokit;
+using Branch = LibGit2Sharp.Branch;
 using Repository = LibGit2Sharp.Repository;
 using Signature = LibGit2Sharp.Signature;
 
@@ -21,7 +22,7 @@ public class GithubApi(GitHubClient githubClient) : IGitApi {
     }
     
     public async Task Fetch(string localReposPath, string? remoteName = default) {
-        using var repository = new Repository(localReposPath);
+        var repository = new Repository(localReposPath);
         var options = new FetchOptions();
         var headRemoteName = remoteName ?? repository.Head.RemoteName;
         Commands.Fetch(repository, headRemoteName, [], options, null);
@@ -45,7 +46,7 @@ public class GithubApi(GitHubClient githubClient) : IGitApi {
         }
         
         var repositoryStatus = await Task.Run(() => {
-            using var repository = new Repository(localReposPath);
+            var repository = new Repository(localReposPath);
             var retrieveStatus = repository.RetrieveStatus();
             return retrieveStatus;
         });
@@ -54,7 +55,7 @@ public class GithubApi(GitHubClient githubClient) : IGitApi {
     
     public async Task<MergeResult> Pull(string localReposPath, string userName, string? email = default) {
         var mergeResult = await Task.Run(() => {
-            using var repo = new Repository(localReposPath);
+            var repo = new Repository(localReposPath);
             var result = Commands.Pull(repo,
                 new Signature(new Identity(userName, email ?? userName), DateTimeOffset.Now),
                 new PullOptions()
@@ -99,14 +100,28 @@ public class GithubApi(GitHubClient githubClient) : IGitApi {
         });
     }
     
+    public async Task<Branch> Checkout(string localReposPath,Branch branch) {
+        return await Task.Run(() => {
+            var repo = new Repository(localReposPath);
+            var checkout = Commands.Checkout(repo, branch);
+            return checkout;
+        });
+    }
     
     public async Task<ICommitLog> BeingPushedCommits(string localReposPath) {
         return await Task.Run(() => {
             var repo = new Repository(localReposPath);
             var trackingBranch = repo.Head.TrackedBranch;
             var log = repo.Commits.QueryBy(new CommitFilter()
-                { IncludeReachableFrom = repo.Head.Tip.Id, ExcludeReachableFrom = trackingBranch.Tip.Id });
+                { IncludeReachableFrom = repo.Head.Tip.Id, ExcludeReachableFrom = trackingBranch?.Tip?.Id });
             return log;
+        });
+    }
+    
+    public async Task<Branch> Branch(string localReposPath) {
+        return await Task.Run(() => {
+            var repo = new Repository(localReposPath);
+            return repo.Head;
         });
     }
     
@@ -118,11 +133,26 @@ public class GithubApi(GitHubClient githubClient) : IGitApi {
         });
     }
     
+    public async Task<BranchCollection> Branches(string localReposPath) {
+        return await Task.Run(() => {
+            var repo = new Repository(localReposPath);
+            return repo.Branches;
+        });
+    }
+    
+    
+    public async Task<Branch> CreateBranch(string localReposPath, string branchName) {
+        return await Task.Run(() => {
+            var repo = new Repository(localReposPath);
+            var branch = repo.CreateBranch(branchName);
+            return branch;
+        });
+    }
+    
     public async Task Add(string localReposPath, IEnumerable<string> file) {
         await Task.Run(() => {
             var repo = new Repository(localReposPath);
             Commands.Stage(repo, file);
         });
     }
-    
 }

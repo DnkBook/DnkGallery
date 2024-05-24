@@ -8,7 +8,7 @@ public partial class GitPage {
     public static readonly string Header = "Git";
     public void BuildUI() => Content(
         Grid(
-            Rows(Star,Auto),
+            Rows(Star, Auto),
             VStack(
                 TextBlock("变更列表")
                     .FontWeight(FontWeights.Bold).FontSize(24),
@@ -16,18 +16,20 @@ public partial class GitPage {
                     .ItemsSource().Bind(vm?.AddedAnas)
                     .ItemTemplate(GridViewTemplate)
                     .Assign(out gridView)).Spacing(12),
-           VStack(
+            Grid(
+                Columns(Star, Auto),
                TextBox().Header("提交信息")
                    .AcceptsReturn(true)
                    .TextWrapping(TextWrapping.Wrap)
                    .MaxHeight(200)
                    .ScrollViewer_VerticalScrollBarVisibility(UIControls.ScrollBarVisibility.Auto)
                    .Text().Bind(vm?.Message, BindingMode.TwoWay),
-               HStack(
                    
-                   Button("提交").BindCommand(vm?.Commit)
-                   )
-               ).Spacing(16).Grid_Row(1)
+                   Button("提交")
+                       .Style(ThemeResource.AccentButtonStyle)
+                       .BindCommand(vm?.Commit)
+                       .Grid_Column(1).VerticalAlignment(VerticalAlignment.Bottom).HCenter().Margin(16,0)
+               ).Grid_Row(1)
         ).Margin(24)
     ).Invoke(ContentInvoke);
     

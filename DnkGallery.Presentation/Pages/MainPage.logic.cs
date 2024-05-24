@@ -14,40 +14,118 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
     private UIControls.Frame frame;
     private UIControls.NavigationView navigationView;
     private UIControls.CommandBar commandBar;
-    private UIControls.StackPanel hstack;
     private UIControls.InfoBadge gitInfoBadge;
     private UIControls.ContentDialog pushDialog;
     private UIControls.HyperlinkButton pushHyperlinkButton;
+    private UIControls.ComboBox branchesComboBox;
+    private UIControls.Button branchesComboBoxFlyoutCancel;
+    private UIControls.Button branchesComboBoxFlyoutConfirm;
     
     public MainPage(Window window, IHost host) {
         MainWindow = window;
-        BuildUI();
         Host = host;
         Ioc.Service = host.Services;
+        BuildUI();
         var setting = Ioc.Service.GetService<Setting>();
         setting?.Load();
         if (setting != null) {
             setting.SettingChanged += (_, _) => { DispatcherQueue.TryEnqueue(async () => await LoadNavigation()); };
         }
+        
 #if WINDOWS
         // hstack.Loaded += (sender, args) => AllowsClickThrough(hstack);
 #endif
-        Loaded += (sender, args) => {
-            CreateAutoSyncCheck();
-            pushHyperlinkButton.Tapped += async (sender, args) => OpenPushDialog();
-        };
+        Loaded += PageLoaded;
     }
+    
+    private async void PageLoaded(object sender, RoutedEventArgs e) {
+        CreateAutoSyncCheck();
+        pushHyperlinkButton.Tapped += (sender, args) => OpenPushDialog();
+        branchesComboBox.TextSubmitted += BranchesComboBoxTextSubmitted;
+        branchesComboBoxFlyoutCancel.Click += (o, eventArgs) => { CloseBranchesComboboxFlyout(); };
+        branchesComboBoxFlyoutConfirm.Click += CreateBranch;
+        branchesComboBox.DropDownOpened += (o, o1) => { GetBranches(); };
+        // branchesComboBox.SelectionChanged += (o, args) => {
+        //     var argsAddedItem = args.AddedItems[0] as Branch;
+        //     SwitchBranch(argsAddedItem.FriendlyName);
+        // };
+        await GetBranches();
+        // branchesComboBox.Loaded += async (o, args) => {
+            await vm.Model.BranchName.Update(_ => Settings.Branch, CancellationToken.None);
+        // };
+    }
+    
+    private async Task SwitchBranch(string selection) {
+        try {
+            // await vm.Model.BranchName.Update(_ => selection, CancellationToken.None);
+            var gitApi = Service.GetService<IGitApi>()!;
+            var branches = await vm.Model.Branches;
+            var branch = branches.FirstOrDefault(x => x.FriendlyName == selection);
+            await gitApi.Checkout(Settings.LocalPath, branch);
+
+            Settings.Branch = selection;
+            Settings.SaveAsync();
+            
+            await vm?.Model.Status();
+            
+            InfoBarManager.Show(UIControls.InfoBarSeverity.Success, GitPage.Header, $"切换{selection}分支成功");
+        } catch (Exception ex) {
+            InfoBarManager.Show(UIControls.InfoBarSeverity.Error, GitPage.Header, ex.Message);
+        }
+    }
+    
+    private async Task GetBranches() {
+        var gitApi = Service.GetService<IGitApi>()!;
+        var branchCollection = await gitApi.Branches(Settings.LocalPath);
+        await vm.Model.Branches.Update(_ => [..branchCollection], CancellationToken.None);
+    }
+    
+    private void CloseBranchesComboboxFlyout() {
+        branchesComboBox.ContextFlyout.Hide();
+    }
+    
+    private async void CreateBranch(object sender, RoutedEventArgs e) {
+        try {
+            var gitApi = Service.GetService<IGitApi>()!;
+            var branchName = await vm.Model.CreateBranchName;
+            var branch = await gitApi.CreateBranch(Settings.LocalPath, branchName);
+            await vm.Model.Branches.AddAsync(branch);
+            
+            SwitchBranch( branch.FriendlyName);
+            InfoBarManager.Show(UIControls.InfoBarSeverity.Success, GitPage.Header, $"创建{branchName}分支成功");
+            CloseBranchesComboboxFlyout();
+        } catch (Exception ex) {
+            InfoBarManager.Show(UIControls.InfoBarSeverity.Error, GitPage.Header, ex.Message);
+        }
+    }
+    
     
     private void GridInvoke(UIControls.Grid obj) {
         InfoBarManager.Init(MainWindow, obj);
     }
     
-    private async void OpenPushDialog() {
+    private async Task OpenPushDialog() {
         var gitApi = Service.GetService<IGitApi>()!;
         var commits = await gitApi.BeingPushedCommits(Settings.LocalPath);
         await vm.Model.BeingPushedCommits.Update(_ => [..commits], CancellationToken.None);
         await pushDialog.ShowAsync();
     }
+    
+    private async void BranchesComboBoxTextSubmitted(UIControls.ComboBox sender,
+        UIControls.ComboBoxTextSubmittedEventArgs args) {
+        args.Handled = true;
+        var text = args.Text;
+        var asyncEnumerable = await vm.Model.Branches;
+        var branch = asyncEnumerable.FirstOrDefault(x => x.FriendlyName == text);
+        if (branch is not null) {
+            SwitchBranch(text);
+        } else {
+            await vm.Model.CreateBranchName.Update(_ => text, CancellationToken.None);
+            sender.ContextFlyout.ShowAt(sender);
+        }
+    }
+    
+    #region AllowsClickThrough
     
     // private void AllowsClickThrough(FrameworkElement frameworkElement) {
     //     var nonClientInputSrc = InputNonClientPointerSource.GetForWindowId(MainWindow.AppWindow.Id);
@@ -70,6 +148,9 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
     //     nonClientInputSrc.SetRegionRects(NonClientRegionKind.Passthrough, rects);
     //     
     // }
+    
+    #endregion
+    
     private async Task LoadNavigation() {
         var galleryService = Service.GetKeyedService<IGalleryService>(Settings.Source)!;
         var chapters = await galleryService.Chapters(Settings.SourcePath);
@@ -200,8 +281,10 @@ public partial record MainViewModel : BaseViewModel {
     public IState<int> SyncCount => State<int>.Empty(this);
     public IState<int> PushCount => State<int>.Empty(this);
     public IState<int> CommitCount => State<int>.Empty(this);
-    
+    public IListState<Branch> Branches => ListState<Branch>.Empty(this);
+    public IState<string> BranchName => State<string>.Empty(this);
     public IListState<Commit> BeingPushedCommits => ListState<Commit>.Empty(this);
+    public IState<string> CreateBranchName => State<string>.Value(this, () => string.Empty);
     
     public async Task GitPull() {
         try {
@@ -250,7 +333,7 @@ public partial record MainViewModel : BaseViewModel {
             }, CancellationToken.None);
             
             var commits = await gitApi.BeingPushedCommits(Settings.LocalPath);
-            await PushCount.Update( _ => commits.Count(), CancellationToken.None);
+            await PushCount.Update(_ => commits.Count(), CancellationToken.None);
         } catch (Exception e) {
             InfoBarManager.Show(UIControls.InfoBarSeverity.Error, GitPage.Header, e.Message);
         }

@@ -7,16 +7,18 @@ public enum Source {
 }
 
 public sealed record Setting {
-    public Source Source { get; set; } = Source.Local;
-    public string LocalPath { get; set; } = ".";
-    public string GitRepos { get; set; } = "Ishning/dnkFuns";
+    public Source? Source { get; set; } = Model.Source.Local;
+    public string? LocalPath { get; set; } = ".";
+    public string? GitRepos { get; set; } = "Ishning/dnkFuns";
     
-    public string GitAccessToken { get; set; }
+    public string? GitAccessToken { get; set; }
 
-    public string GitUserName { get; set; }
+    public string? GitUserName { get; set; }
+    
+    public string? Branch { get; set; } = "main";
     public string SourcePath => Source switch {
-        Source.Local => LocalPath,
-        Source.Git => Path.AltDirectorySeparatorChar.ToString(),
+        Model.Source.Local => LocalPath,
+        Model.Source.Git => Path.AltDirectorySeparatorChar.ToString(),
         _ => throw new ArgumentOutOfRangeException()
     };
     
@@ -42,21 +44,24 @@ public sealed record Setting {
         SettingChanged?.Invoke(this, this);
     }
     
-    public async Task SaveAsync(Setting? setting) {
+    public async Task SaveAsync(Setting setting) {
         Update(setting);
+        await SaveAsync();
+    }
+    
+    public async Task SaveAsync() {
         var serialize = JsonSerializer.Serialize(this, jsonSerializerOptions);
         await File.WriteAllTextAsync(GetSettingPath(), serialize);
-        
         SettingChanged?.Invoke(this, this);
     }
     
-    
     private void Update(Setting setting) {
-        Source = setting.Source;
-        LocalPath = setting.LocalPath;
-        GitRepos = setting.GitRepos;
-        GitAccessToken = setting.GitAccessToken;
-        GitUserName = setting.GitUserName;
+        Source = setting.Source ?? Source;
+        LocalPath = setting.LocalPath ?? LocalPath;
+        GitRepos = setting.GitRepos ?? GitRepos;
+        GitAccessToken = setting.GitAccessToken ?? GitAccessToken;
+        GitUserName = setting.GitUserName ?? GitUserName;
+        Branch = setting.Branch ?? Branch;
     }
     
     public event EventHandler<Setting> SettingChanged;

@@ -1,6 +1,7 @@
 using LibGit2Sharp;
 using Octokit;
-using Credentials = LibGit2Sharp.Credentials;
+using Branch = LibGit2Sharp.Branch;
+
 namespace DnkGallery.Model.Github;
 
 public interface IGitApi {
@@ -20,12 +21,22 @@ public interface IGitApi {
     
     public bool CheckWorkDir(string localReposPath);
     
-    public Task Push(string localReposPath, string userName,string accessToken, string? remoteName = "origin");
+    public Task Push(string localReposPath, string userName, string accessToken, string? remoteName = "origin");
     
     public Task Commit(string localReposPath, string message, string userName, string? email = default);
     
     public Task Add(string localReposPath, IEnumerable<string> file);
     
+    public Task<Branch> Checkout(string localReposPath, Branch branch);
+    
     public Task<ICommitLog> BeingPushedCommits(string localReposPath);
+    
+    public Task<Branch> Branch(string localReposPath);
+    
     public Task<IQueryableCommitLog> Commits(string localReposPath);
+    
+    Task<BranchCollection> Branches(string localReposPath);
+    
+    
+    Task<Branch> CreateBranch(string localReposPath, string? branchName);
 }

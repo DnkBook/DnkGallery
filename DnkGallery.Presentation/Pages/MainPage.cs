@@ -32,24 +32,46 @@ partial class MainPage {
                             HyperlinkButton(
                                     FontIcon(FontSize: 14).Glyph("\uE895").HCenter().VCenter())
                                 .ToolTipService_ToolTip("同步").Height(36).BindCommand(vm?.GitPull),
-                                InfoBadge()
-                                    .Value().Bind(vm?.SyncCount)
-                                    .Visibility().Bind(vm?.SyncCount, convert: (int count) => count > 0 ? Visibility.Visible : Visibility.Collapsed)
-                                    .HorizontalAlignment(HorizontalAlignment.Right)
-                                    .VerticalAlignment(VerticalAlignment.Top)
+                            InfoBadge()
+                                .Value().Bind(vm?.SyncCount)
+                                .Visibility().Bind(vm?.SyncCount,
+                                    convert: (int count) => count > 0 ? Visibility.Visible : Visibility.Collapsed)
+                                .HorizontalAlignment(HorizontalAlignment.Right)
+                                .VerticalAlignment(VerticalAlignment.Top)
                         ),
-                        
                         Grid(
                             HyperlinkButton(FontIcon(FontSize: 14).Glyph("\uE8AD"))
                                 .Height(36).Assign(out pushHyperlinkButton)
                                 .ToolTipService_ToolTip("推送"),
                             InfoBadge()
                                 .Value().Bind(vm?.PushCount)
-                                .Visibility().Bind(vm?.PushCount, convert: (int count) => count > 0 ? Visibility.Visible : Visibility.Collapsed)
+                                .Visibility().Bind(vm?.PushCount,
+                                    convert: (int count) => count > 0 ? Visibility.Visible : Visibility.Collapsed)
                                 .HorizontalAlignment(HorizontalAlignment.Right)
                                 .VerticalAlignment(VerticalAlignment.Top)
-                        )
-                    ).Height(44).Assign(out hstack).Margin(16, 0)
+                        ),
+                        Grid(
+                            ComboBox()
+                                .IsEditable(true)
+                                .Assign(out branchesComboBox)
+                                .SelectedValue().Bind(vm?.BranchName,BindingMode.TwoWay)
+                                .Width(160)
+                                .DisplayMemberPath("FriendlyName")
+                                .SelectedValuePath("FriendlyName")
+                                .ItemsSource().Bind(vm?.Branches)
+                                .ContextFlyout(Flyout(
+                                    VStack(
+                                        TextBlock().Bind(vm?.CreateBranchName,
+                                                convert: (string name) => $"是否创建{name}分支"),
+                                        HStack(
+                                            Button("创建").Assign(out branchesComboBoxFlyoutConfirm)
+                                                .Style(ThemeResource.AccentButtonStyle),
+                                            Button("取消").Assign(out branchesComboBoxFlyoutCancel)
+                                        ).Spacing(16)
+                                    ).Spacing(16)
+                                )).Margin(4, 0, 0, 0).HCenter().VCenter()
+                        ).Height(36)
+                    ).Height(44).Margin(16, 0)
                 )
                 .IsBackEnabled(true)
                 .Assign(out navigationView)
@@ -58,22 +80,22 @@ partial class MainPage {
             // .Bind(vm?.MenuItems)
             // .MenuItemTemplate(MenuItemTemplate)
             ContentDialog(
-                VStack(
-                      ListView(() => 
-                          VStack(
-                            TextBlock().Bind("MessageShort"),
-                                HStack(
+                    Grid(
+                        ListView(() =>
+                            VStack(
+                                TextBlock().Bind("MessageShort")
+                                    .FontSize(16)
+                                    .FontWeight(FontWeights.Bold),
                                 TextBlock().Bind("Committer")
-                                    .FontSize(12).FontWeight(FontWeights.Bold),
-                                    TextBlock()
-                                        .Bind("Committer", 
-                                            convert:(Signature signature)=>
-                                                signature.When.ToString("yyyy-MM-dd HH:mm:ss"))
-                                        .FontSize(12)
-                                )
+                                    .FontSize(12),
+                                TextBlock()
+                                    .Bind("Committer",
+                                        convert: (Signature signature) =>
+                                            signature.When.ToString("yyyy-MM-dd HH:mm:ss"))
+                                    .FontSize(12)
                             ).Padding(8)
-                          ).ItemsSource().Bind(vm?.BeingPushedCommits)  
-                    ).Spacing(24)
+                        ).ItemsSource().Bind(vm?.BeingPushedCommits)
+                    )
                 )
                 .XamlRoot(XamlRoot)
                 .Title(GitPage.Header)
