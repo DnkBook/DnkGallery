@@ -1,6 +1,5 @@
 ﻿using DnkGallery.Model;
 using DnkGallery.Model.Github;
-using LibGit2Sharp;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Navigation;
 using Path = System.IO.Path;

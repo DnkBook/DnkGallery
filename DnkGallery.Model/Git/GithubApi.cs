@@ -76,17 +76,28 @@ public class GithubApi(GitHubClient githubClient) : IGitApi {
                     Password = accessToken
                 },
             };
-            repo.Network.Push(remote, repo.Refs.Head.TargetIdentifier, options);
+            
+            var remoteBranch = repo.Head.CanonicalName.Replace("heads", $"remotes/{remoteName}");
+            repo.Network.Push(remote, repo.Head.CanonicalName, options);
+            var trackedBranch = repo.Branches.FirstOrDefault(x=>x.UpstreamBranchCanonicalName == repo.Head.CanonicalName)?.CanonicalName ?? remoteBranch;
+            repo.Branches.Update(repo.Head,
+            b => b.TrackedBranch = trackedBranch);
         });
     }
     
-    public async Task PullRequest(string repos, string accessToken, string title, string branch) {
+    public async Task PullRequest(string repos, string localReposPath ,string accessToken, string title, string branch ,string? toBranch = "main") {
+        var repo = new Repository(localReposPath);
+        var repoBranch = repo.Branches[branch];
+        var baseBranch = repo.Branches[toBranch];
+        
         githubClient.Credentials = new Octokit.Credentials(accessToken);
         var strings = repos.Split(Path.AltDirectorySeparatorChar);
         var repository = await githubClient.Repository.Get(strings[0], strings[1]);
-        var defaultBranch = await githubClient.Git.Reference.Get(repository.Id, branch);
-        var featureBranch =
-            await githubClient.Git.Reference.Create(repository.Id, new NewReference(branch, defaultBranch.Object.Sha));
+        
+        
+        var defaultBranch = await githubClient.Git.Reference.Get(repository.Id, baseBranch.CanonicalName);
+        var featureBranch = await githubClient.Git.Reference.Get(repository.Id, repoBranch.CanonicalName);
+            
         var newPullRequest = new NewPullRequest(title, featureBranch.Ref, defaultBranch.Ref);
         var pullRequest = await githubClient.PullRequest.Create(repository.Id, newPullRequest);
     }
@@ -100,7 +111,7 @@ public class GithubApi(GitHubClient githubClient) : IGitApi {
         });
     }
     
-    public async Task<Branch> Checkout(string localReposPath,Branch branch) {
+    public async Task<Branch> Checkout(string localReposPath, Branch branch) {
         return await Task.Run(() => {
             var repo = new Repository(localReposPath);
             var checkout = Commands.Checkout(repo, branch);

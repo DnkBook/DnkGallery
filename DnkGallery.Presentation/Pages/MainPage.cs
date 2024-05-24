@@ -81,6 +81,7 @@ partial class MainPage {
             // .MenuItemTemplate(MenuItemTemplate)
             ContentDialog(
                     Grid(
+                        Rows(Star,Auto,Auto),
                         ListView(() =>
                             VStack(
                                 TextBlock().Bind("MessageShort")
@@ -94,7 +95,9 @@ partial class MainPage {
                                             signature.When.ToString("yyyy-MM-dd HH:mm:ss"))
                                     .FontSize(12)
                             ).Padding(8)
-                        ).ItemsSource().Bind(vm?.BeingPushedCommits)
+                        ).ItemsSource().Bind(vm?.BeingPushedCommits),
+                        CheckBox("提交Pull Request").Bind(vm?.AddPullRequest).Grid_Row(1).Margin(0,16),
+                        Button("Pull Request").BindCommand(vm?.PullRequest).Grid_Row(2)
                     )
                 )
                 .XamlRoot(XamlRoot)

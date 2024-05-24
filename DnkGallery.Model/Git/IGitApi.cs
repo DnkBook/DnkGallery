@@ -17,7 +17,7 @@ public interface IGitApi {
     
     public Task<MergeResult> Pull(string localReposPath, string userName, string? email = default);
     
-    public Task PullRequest(string repos, string accessToken, string title, string branch);
+    public Task PullRequest(string repos,string localReposPath , string accessToken, string title, string branch ,string? baseBranch = "main");
     
     public bool CheckWorkDir(string localReposPath);
     

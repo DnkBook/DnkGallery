@@ -25,10 +25,13 @@ public partial class GitPage {
                    .ScrollViewer_VerticalScrollBarVisibility(UIControls.ScrollBarVisibility.Auto)
                    .Text().Bind(vm?.Message, BindingMode.TwoWay),
                    
+                
                    Button("提交")
                        .Style(ThemeResource.AccentButtonStyle)
                        .BindCommand(vm?.Commit)
-                       .Grid_Column(1).VerticalAlignment(VerticalAlignment.Bottom).HCenter().Margin(16,0)
+                       .Grid_Column(1)
+                       .VerticalAlignment(VerticalAlignment.Bottom)
+                       .HCenter().Margin(16,0)
                ).Grid_Row(1)
         ).Margin(24)
     ).Invoke(ContentInvoke);

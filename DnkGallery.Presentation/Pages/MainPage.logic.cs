@@ -51,20 +51,20 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
         // };
         await GetBranches();
         // branchesComboBox.Loaded += async (o, args) => {
-            await vm.Model.BranchName.Update(_ => Settings.Branch, CancellationToken.None);
+        await vm.Model.BranchName.Update(_ => Settings.Branch, CancellationToken.None);
         // };
     }
     
     private async Task SwitchBranch(string selection) {
         try {
-            // await vm.Model.BranchName.Update(_ => selection, CancellationToken.None);
+            await vm.Model.BranchName.Update(_ => selection, CancellationToken.None);
             var gitApi = Service.GetService<IGitApi>()!;
             var branches = await vm.Model.Branches;
             var branch = branches.FirstOrDefault(x => x.FriendlyName == selection);
             await gitApi.Checkout(Settings.LocalPath, branch);
-
+            
             Settings.Branch = selection;
-            Settings.SaveAsync();
+            await Settings.SaveAsync();
             
             await vm?.Model.Status();
             
@@ -90,8 +90,7 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
             var branchName = await vm.Model.CreateBranchName;
             var branch = await gitApi.CreateBranch(Settings.LocalPath, branchName);
             await vm.Model.Branches.AddAsync(branch);
-            
-            SwitchBranch( branch.FriendlyName);
+            await SwitchBranch(branch.FriendlyName);
             InfoBarManager.Show(UIControls.InfoBarSeverity.Success, GitPage.Header, $"创建{branchName}分支成功");
             CloseBranchesComboboxFlyout();
         } catch (Exception ex) {
@@ -118,7 +117,7 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
         var asyncEnumerable = await vm.Model.Branches;
         var branch = asyncEnumerable.FirstOrDefault(x => x.FriendlyName == text);
         if (branch is not null) {
-            SwitchBranch(text);
+            await SwitchBranch(text);
         } else {
             await vm.Model.CreateBranchName.Update(_ => text, CancellationToken.None);
             sender.ContextFlyout.ShowAt(sender);
@@ -271,8 +270,7 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
     
     private async void CreateAutoSyncCheck() {
         await vm?.Model.Status();
-        var periodicTimer = ThreadPoolTimer.CreatePeriodicTimer(
-            (source) => { DispatcherQueue.TryEnqueue(async () => { await vm?.Model.Status(); }); },
+        var periodicTimer = ThreadPoolTimer.CreatePeriodicTimer((source) => { DispatcherQueue.TryEnqueue(async () => { await vm?.Model.Status(); }); },
             TimeSpan.FromSeconds(5));
     }
 }
@@ -285,6 +283,8 @@ public partial record MainViewModel : BaseViewModel {
     public IState<string> BranchName => State<string>.Empty(this);
     public IListState<Commit> BeingPushedCommits => ListState<Commit>.Empty(this);
     public IState<string> CreateBranchName => State<string>.Value(this, () => string.Empty);
+    
+    public IState<bool> AddPullRequest => State<bool>.Value(this, () => true);
     
     public async Task GitPull() {
         try {
@@ -302,11 +302,27 @@ public partial record MainViewModel : BaseViewModel {
         }
     }
     
-    public async Task GitPush() {
+    public async Task GitPush() { 
         try {
             var gitApi = Service.GetService<IGitApi>()!;
+            var beingPushedCommits = await BeingPushedCommits;
+            var commit = beingPushedCommits.FirstOrDefault();
             await gitApi.Push(Settings.LocalPath, Settings.GitUserName, Settings.GitAccessToken);
+            var addPullRequest = await AddPullRequest;
+            if (addPullRequest) {
+                await PullRequest($"{commit?.Message}-{commit?.Author.When.ToString()}");
+            }
             InfoBarManager.Show(UIControls.InfoBarSeverity.Success, GitPage.Header, "推送成功");
+        } catch (Exception e) {
+            InfoBarManager.Show(UIControls.InfoBarSeverity.Error, GitPage.Header, e.Message);
+        }
+    }
+    
+    public async Task PullRequest(string message) {
+        try {
+            var gitApi = Service.GetService<IGitApi>()!;
+            await gitApi.PullRequest(Settings.GitRepos, Settings.LocalPath,Settings.GitAccessToken, message, Settings.Branch);
+            InfoBarManager.Show(UIControls.InfoBarSeverity.Success, GitPage.Header, "提交Pull Request成功");
         } catch (Exception e) {
             InfoBarManager.Show(UIControls.InfoBarSeverity.Error, GitPage.Header, e.Message);
         }
