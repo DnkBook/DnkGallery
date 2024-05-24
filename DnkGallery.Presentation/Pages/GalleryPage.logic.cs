@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using Windows.System;
 using DnkGallery.Model;
+using DnkGallery.Model.Github;
 using DnkGallery.Model.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Input;
@@ -117,14 +118,26 @@ public partial record GalleryViewModel : BaseViewModel {
     
     public IState<StorageSaveImageData> SaveData => State<StorageSaveImageData>.Empty(this);
     
+    public IState<bool> AddToGit => State<bool>.Value(this, () => true);
     
     public async Task Save() {
         var saveAnaData = await SaveData;
-        if (saveAnaData != null) {
-            await Storage.SaveImage(saveAnaData);
-            // 保存完reload一下
-            await LoadAnas();
+        var addToGit = await AddToGit;
+        if (saveAnaData == null) {
+            return;
         }
+        await Storage.SaveImage(saveAnaData);
+        if (addToGit) {
+            try {
+                var gitApi = Service.GetService<IGitApi>()!;
+                await gitApi.Add(Settings.LocalPath, [saveAnaData.FullName]);
+                InfoBarManager.Show(UIControls.InfoBarSeverity.Success, GitPage.Header, $"{saveAnaData.FileName}已添加到Git");
+            } catch (Exception e) {
+                InfoBarManager.Show( UIControls.InfoBarSeverity.Error,GitPage.Header,e.Message);
+            }
+        }
+        // 保存完reload一下
+        await LoadAnas();
     }
     
     public async Task LoadAnas() {

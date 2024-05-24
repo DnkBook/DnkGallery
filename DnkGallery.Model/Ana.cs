@@ -27,4 +27,13 @@ public record Ana {
         DateTime = dateTime;
         Name = name;
     }
+    
+    public Ana(string path) {
+        var fileName = System.IO.Path.GetFileName(path);
+        var fileNameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension(fileName);
+        var dateTime = DateTime.ParseExact(fileNameWithoutExtension, "yyyy-MM-dd_HHmmss", null);
+        Path = path;
+        DateTime = dateTime;
+        Name = fileName;
+    }
 }
