@@ -43,14 +43,16 @@ public static class Navigator {
         string[] anchors,
         string? header = default,
         UIControls.Symbol icon = UIControls.Symbol.Calendar,
-        NavigationViewItemType type = NavigationViewItemType.Main
+        NavigationViewItemType type = NavigationViewItemType.Main,
+        UIControls.InfoBadge infoBadge = null
     ) {
         return new UIControls.NavigationViewItem {
             Content = content,
             Icon = new UIControls.SymbolIcon(icon),
             Tag = new NavigationTag<TParameter>(name, page, header ?? content,
                 new NavigationParameter<TParameter>(name, anchors, payload, type)),
-            HasUnrealizedChildren = hasChildren
+            HasUnrealizedChildren = hasChildren,
+            InfoBadge = infoBadge
         };
     }
     
@@ -91,7 +93,9 @@ public static class Navigator {
             model.Anchors,
             model.Header,
             model.Icon,
-            model.Type);
+            model.Type,
+            model.InfoBadge
+            );
     
     /// <summary>
     /// 查找导航条目
@@ -251,7 +255,6 @@ public static class Navigator {
             item.Anchors = [..parentAnchors ?? [], ..item.Anchors];
             item.Type = type;
             var navigationViewItem = NavigationItemModelToNavigationViewItem(item);
-            
             return navigationViewItem;
         });
         
@@ -273,6 +276,7 @@ public class NavigationItemModel<T>() {
     public string[] Anchors { get; set; } = [];
     public required T Payload { get; set; }
     
+    public UIControls.InfoBadge InfoBadge { get; set; }
     public NavigationViewItemType Type { get; set; }
 }
 

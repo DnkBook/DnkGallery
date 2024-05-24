@@ -48,6 +48,9 @@ public partial class SettingPage {
     
     private UIElement[] GitSettingItems() => [
         SettingsExpander([
+                SettingsExpanderContent(TextBlock("用户名"),
+                    TextBox()
+                        .Text().Bind(vm?.Setting?.GitUserName, BindingMode.TwoWay)),
                 SettingsExpanderContent(TextBlock("Git Access Token"),
                     TextBox()
                         .AcceptsReturn(true)

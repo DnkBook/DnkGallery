@@ -74,7 +74,8 @@ public partial class App : Application {
                 .ConfigureServices((context, services) => {
                     services.AddSingleton<Setting>();
                     services.AddSingleton<GitHubClient>(_ => new GitHubClient(new ProductHeaderValue("DnkGallery")) {
-                        Credentials = new Credentials(_.GetService<Setting>()?.GitAccessToken)
+                        Credentials = new Credentials(_.GetService<Setting>()?.GitAccessToken,AuthenticationType.Anonymous)
+                        
                     });
                     services.AddSingleton<IGitApi, GithubApi>();
                     services.AddKeyedSingleton<IGalleryService, LocalGalleryService>(Source.Local);
