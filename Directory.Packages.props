@@ -12,11 +12,4 @@
     <PackageVersion Include="Microsoft.WindowsAppSDK" Version="1.5.240428000" />
     <PackageVersion Include="Octokit" Version="11.0.1" />
   </ItemGroup>
-    <ItemGroup>
-      <PackageVersion Include="coverlet.collector" Version="6.0.0" />
-      <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
-      <PackageVersion Include="NUnit" Version="3.14.0" />
-      <PackageVersion Include="NUnit.Analyzers" Version="3.9.0" />
-      <PackageVersion Include="NUnit3TestAdapter" Version="4.5.0" />
-    </ItemGroup>
 </Project>
