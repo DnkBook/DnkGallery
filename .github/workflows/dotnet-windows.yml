@@ -41,6 +41,8 @@ name: DnkGallery_Windows
 on:
   push:
     branches: [ "master" ]
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
   pull_request:
     branches: [ "master" ]
 
@@ -97,7 +99,7 @@ jobs:
 
     # Create the app package by building and packaging the Windows Application Packaging project
     - name: Create the app package
-      run: dotnet publish $env:Solution_Name -f $env:TargetFramework -c Release -r $env:Platforms -o $env:Solution_Name\Packages --self-contained true -p:PublishSingleFile=true
+      run: dotnet publish $env:Solution_Name -f $env:TargetFramework -c Release -r $env:Platforms -o $env:Solution_Name\Publish --self-contained true -p:PublishSingleFile=true
 #      run: msbuild $env:Solution_Name  /p:Configuration=$env:Configuration /p:UapAppxPackageBuildMode=$env:Appx_Package_Build_Mode /p:AppxBundle=$env:Appx_Bundle /p:PackageCertificateKeyFile=GitHubActionsWorkflow.pfx /p:PackageCertificatePassword=${{ secrets.Pfx_Key }}
       env:
         TargetFramework: net8.0-windows10.0.19041
@@ -113,4 +115,16 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: EXE Package
-        path: ${{ env.Solution_Name  }}\Packages\DnkGallery.exe
+        path: ${{ env.Solution_Name  }}\Publish\DnkGallery.exe
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: preview
+        draft: false
+        prerelease: false
