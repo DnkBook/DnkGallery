@@ -57,7 +57,7 @@ jobs:
                              # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
 
     env:
-      Solution_Name: DnkGallery.sln                        # Replace with your solution name, i.e. MyWpfApp.sln.
+      Solution_Name: DnkGallery                     # Replace with your solution name, i.e. MyWpfApp.sln.
       # Test_Project_Path: your-test-project-path                 # Replace with the path to your test project, i.e. MyWpfApp.Tests\MyWpfApp.Tests.csproj.
     #  Wap_Project_Directory: DnkGallery.csproj    # Replace with the Wap project directory relative to the solution, i.e. MyWpfApp.Package.
     #  Wap_Project_Path: DnkGallery/DnkGallery.csproj                   # Replace with the path to your Wap project, i.e. MyWpf.App.Package\MyWpfApp.Package.wapproj.
@@ -97,11 +97,11 @@ jobs:
 
     # Create the app package by building and packaging the Windows Application Packaging project
     - name: Create the app package
-      run: msbuild $env:Solution_Name  /p:Configuration=$env:Configuration /p:UapAppxPackageBuildMode=$env:Appx_Package_Build_Mode /p:AppxBundle=$env:Appx_Bundle /p:PackageCertificateKeyFile=GitHubActionsWorkflow.pfx /p:PackageCertificatePassword=${{ secrets.Pfx_Key }}
+      run: dotnet publish $env:Solution_Name -f $env:TargetFramework -c Release -r $env:Platforms -o $env:Solution_Name\Packages --self-contained true -p:PublishSingleFile=true
+#      run: msbuild $env:Solution_Name  /p:Configuration=$env:Configuration /p:UapAppxPackageBuildMode=$env:Appx_Package_Build_Mode /p:AppxBundle=$env:Appx_Bundle /p:PackageCertificateKeyFile=GitHubActionsWorkflow.pfx /p:PackageCertificatePassword=${{ secrets.Pfx_Key }}
       env:
-        Appx_Bundle: Never
-        Appx_Bundle_Platforms: x86|x64
-        Appx_Package_Build_Mode: SideloadOnly
+        TargetFramework: net8.0-windows10.0.19041
+        Platforms: win-x86|win-x64
         Configuration: ${{ matrix.configuration }}
 
     # Remove the pfx
@@ -113,4 +113,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: EXE Package
-        path: ${{ env.Solution_Name  }}\Packages
+        path: ${{ env.Solution_Name  }}\Packages\DnkGallery.exe
