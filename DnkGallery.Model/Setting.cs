@@ -8,15 +8,12 @@ public enum Source {
 
 public sealed record Setting {
     public Source? Source { get; set; } = Model.Source.Local;
-    public string? LocalPath { get; set; } = ".";
-    public string? GitRepos { get; set; } = "Ishning/dnkFuns";
-    
+    public string? LocalPath { get; set; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "dnkFuns");
+    public string? GitRepos { get; set; } = "DnkBook/dnkFuns";
     public string? GitAccessToken { get; set; }
-
     public string? GitUserName { get; set; }
     
-    public string? Branch { get; set; } = "main";
-    public string SourcePath => Source switch {
+    public string? SourcePath => Source switch {
         Model.Source.Local => LocalPath,
         Model.Source.Git => Path.AltDirectorySeparatorChar.ToString(),
         _ => throw new ArgumentOutOfRangeException()
@@ -61,7 +58,6 @@ public sealed record Setting {
         GitRepos = setting.GitRepos ?? GitRepos;
         GitAccessToken = setting.GitAccessToken ?? GitAccessToken;
         GitUserName = setting.GitUserName ?? GitUserName;
-        Branch = setting.Branch ?? Branch;
     }
     
     public event EventHandler<Setting> SettingChanged;

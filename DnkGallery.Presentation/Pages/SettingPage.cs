@@ -35,10 +35,12 @@ public partial class SettingPage {
                     .Bind(vm?.Setting?.Source, BindingMode.TwoWay)),
                 SettingsExpanderContent(TextBlock("本地地址"), 
                     TextBox()
+                        .MinWidth(300)
                         .MaxWidth(300)
                     .Text().Bind(vm?.Setting?.LocalPath, BindingMode.TwoWay)),
                 SettingsExpanderContent(TextBlock("Git仓库"),
                     TextBox()
+                        .MinWidth(300)
                         .MaxWidth(300)
                         .Text().Bind(vm?.Setting?.GitRepos, BindingMode.TwoWay)),
             ], SymbolIcon(UIControls.Symbol.Folder),
@@ -50,11 +52,14 @@ public partial class SettingPage {
         SettingsExpander([
                 SettingsExpanderContent(TextBlock("用户名"),
                     TextBox()
+                        .MinWidth(100)
+                        .MaxWidth(300)
                         .Text().Bind(vm?.Setting?.GitUserName, BindingMode.TwoWay)),
                 SettingsExpanderContent(TextBlock("Git Access Token"),
                     TextBox()
                         .AcceptsReturn(true)
                         .TextWrapping(TextWrapping.Wrap)
+                        .MinWidth(300)
                         .MaxHeight(200)
                         .ScrollViewer_VerticalScrollBarVisibility(UIControls.ScrollBarVisibility.Auto)
                         .MaxWidth(300)
