@@ -1,12 +1,8 @@
-using System.Collections.Immutable;
 using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.System;
 using DnkGallery.Model;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Navigation;
 namespace DnkGallery.Presentation.Pages;
-using KeyboardAccelerator = Microsoft.UI.Xaml.Input.KeyboardAccelerator;
 [UIBindable]
 public sealed partial class AnaViewerPage : BasePage<BindableAnaViewViewModel>, IBuildUI {
     private UIControls.ScrollViewer scrollViewer;
@@ -17,7 +13,7 @@ public sealed partial class AnaViewerPage : BasePage<BindableAnaViewViewModel>, 
     private UIControls.AppBarButton prevButton;
     private UIControls.AppBarButton nextButton;
     public AnaViewerPage() => BuildUI();
-    protected override async void OnNavigatedTo(NavigationEventArgs e) {
+    protected override async void OnNavigatedTo(UIXaml.Navigation.NavigationEventArgs e) {
         var parameter = e.Parameter as NavigationParameter<(IImmutableList<Ana> Anas, Ana Ana, int Index)>;
         await vm.Model.Anas.Update(_ => parameter.Payload.Anas, CancellationToken.None);
         await vm.Model.Index.Update(_ => parameter.Payload.Index, CancellationToken.None);
@@ -46,7 +42,7 @@ public sealed partial class AnaViewerPage : BasePage<BindableAnaViewViewModel>, 
     /// </summary>
     /// <param name="sender"></param>
     /// <param name="args"></param>
-    private async void CopyInvoke(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
+    private async void CopyInvoke(UIXaml.Input.KeyboardAccelerator sender, UIXaml.Input.KeyboardAcceleratorInvokedEventArgs args) {
         await Copy();
     }
     
@@ -64,7 +60,7 @@ public sealed partial class AnaViewerPage : BasePage<BindableAnaViewViewModel>, 
     /// 订阅快捷键事件
     /// </summary>
     private void RegisterAccelerator() {
-        var copyAccelerator = new KeyboardAccelerator {
+        var copyAccelerator = new UIXaml.Input.KeyboardAccelerator {
             Key = VirtualKey.C,
             Modifiers = VirtualKeyModifiers.Control
         };

@@ -9,6 +9,7 @@
       net8.0-browserwasm;
     </TargetFrameworks>
 
+    <ImplicitUsings>false</ImplicitUsings>
     <OutputType>Exe</OutputType>
     <UnoSingleProject>true</UnoSingleProject>
 
@@ -19,6 +20,8 @@
     <!-- Versions -->
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
     <ApplicationVersion>1</ApplicationVersion>
+
+
     <!--
       If you encounter this error message:
 
@@ -29,14 +32,14 @@
       the "Microsoft.Windows.SDK.BuildTools" package above, and the "revision" version number
       must be the highest found in https://www.nuget.org/packages/Microsoft.Windows.SDK.NET.Ref.
     -->
-    <!-- <WindowsSdkPackageVersion>10.0.22621.28</WindowsSdkPackageVersion> -->
-
+    <WindowsPackageType>None</WindowsPackageType>
+    <SelfContained>true</SelfContained>
     <!--
       UnoFeatures let's you quickly add and manage implicit package references based on the features you want to use.
       https://aka.platform.uno/singleproject-features
     -->
     <UnoFeatures>
-      CSharpMarkup;
+<!--      CSharpMarkup;-->
       Hosting;
       Toolkit;
       Logging;
@@ -49,6 +52,17 @@
     </UnoFeatures>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DnkGallery.Presentation\DnkGallery.Presentation.csproj" />
+    <PackageReference Include="CSharpMarkup.WinUI" />
+    <PackageReference Include="CSharpMarkup.WinUI.Uno.Toolkit" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DnkGallery.Model\DnkGallery.Model.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <UnoSplashScreen Remove="Assets\Splash\splash_screen.ico" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <UnoIconForegroundFile>Assets\Icons\icon.svg</UnoIconForegroundFile>
+  </PropertyGroup>
 </Project>

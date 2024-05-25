@@ -1,6 +1,5 @@
 using Windows.Graphics.Imaging;
 using Windows.Storage;
-using DnkGallery.Presentation.Pages;
 using Path = System.IO.Path;
 namespace DnkGallery.Presentation.Utils;
 

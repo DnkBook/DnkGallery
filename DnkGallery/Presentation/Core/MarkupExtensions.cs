@@ -11,8 +11,8 @@ internal static class MarkupExtensions {
 internal static class MarkupHelpers {
     internal static BitmapIcon Icon(string appAsset) => BitmapIcon(UriSource: new Uri($"ms-appx:///Assets/{appAsset}.png"));
     
-    internal static UI.Xaml.Media.Imaging.BitmapImage ByteArrayConvertToBitmapImage(byte[] bytes) {
-        var image = new UI.Xaml.Media.Imaging.BitmapImage();
+    internal static UIMedia.Imaging.BitmapImage ByteArrayConvertToBitmapImage(byte[] bytes) {
+        var image = new UIMedia.Imaging.BitmapImage();
         using var stream = new InMemoryRandomAccessStream();
         using var writer = new DataWriter(stream);
         writer.WriteBytes(bytes);

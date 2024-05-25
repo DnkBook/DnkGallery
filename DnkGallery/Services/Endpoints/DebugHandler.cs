@@ -1,3 +1,4 @@
+using Uno.Extensions.Logging;
 namespace DnkGallery.Services.Endpoints;
 
 internal class DebugHttpHandler : DelegatingHandler

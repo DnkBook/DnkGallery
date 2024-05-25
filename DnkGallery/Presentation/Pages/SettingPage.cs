@@ -1,7 +1,4 @@
 using DnkGallery.Model;
-using Microsoft.UI.Text;
-using Microsoft.UI.Xaml;
-using UIElement = Microsoft.UI.Xaml.UIElement;
 
 namespace DnkGallery.Presentation.Pages;
 
@@ -10,13 +7,13 @@ public partial class SettingPage {
     public void BuildUI() => Content(
         VStack(
             TextBlock("基本设置")
-                .FontWeight(FontWeights.Bold),
+                .FontWeight(UI.Text.FontWeights.Bold),
              VStack(
                  BaiscSettingItems()
              ).Spacing(2).HorizontalAlignment(HorizontalAlignment.Stretch),
              
              TextBlock("Git设置")
-                 .FontWeight(FontWeights.Bold),
+                 .FontWeight(UI.Text.FontWeights.Bold),
              VStack(
                  GitSettingItems()
              ).Spacing(2).HorizontalAlignment(HorizontalAlignment.Stretch),
@@ -25,7 +22,7 @@ public partial class SettingPage {
         ).Margin(24).Spacing(12)
     );
     
-    private UIElement[] BaiscSettingItems() => [
+    private UIXaml.UIElement[] BaiscSettingItems() => [
         SettingsExpander([
                 SettingsExpanderContent(TextBlock("源类型"), 
                     ComboBox()
@@ -48,7 +45,7 @@ public partial class SettingPage {
             "使用本地源或者从Git上获取")
     ];
     
-    private UIElement[] GitSettingItems() => [
+    private UIXaml.UIElement[] GitSettingItems() => [
         SettingsExpander([
                 SettingsExpanderContent(TextBlock("用户名"),
                     TextBox()
@@ -58,7 +55,7 @@ public partial class SettingPage {
                 SettingsExpanderContent(TextBlock("Git Access Token"),
                     TextBox()
                         .AcceptsReturn(true)
-                        .TextWrapping(TextWrapping.Wrap)
+                        .TextWrapping(UIXaml.TextWrapping.Wrap)
                         .MinWidth(300)
                         .MaxHeight(200)
                         .ScrollViewer_VerticalScrollBarVisibility(UIControls.ScrollBarVisibility.Auto)
