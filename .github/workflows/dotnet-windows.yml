@@ -38,6 +38,7 @@
 
 name: DnkGallery_Windows
 
+
 on:
   push:
     branches: [ "master" ]
@@ -47,7 +48,6 @@ on:
     branches: [ "master" ]
 
 jobs:
-
   build:
 
     strategy:
@@ -55,6 +55,8 @@ jobs:
         configuration: [Release]
         platform: [x64]
 
+    permissions:
+      contents: write
     runs-on: windows-latest  # For a list of available runner types, refer to
                              # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
 
@@ -128,3 +130,13 @@ jobs:
         body: preview
         draft: false
         prerelease: false
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ env.Solution_Name  }}\Publish\DnkGallery.exe
+        asset_name: DnkGallery_x64_${{ github.ref }}.exe
+        asset_content_type: application/exe
