@@ -1,10 +1,6 @@
 using System.Numerics;
 using Windows.System.Threading;
-using Microsoft.UI.Composition;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Input;
 using Uno.Disposables;
-using UIElement = Microsoft.UI.Xaml.UIElement;
 namespace DnkGallery.Presentation.Utils;
 
 public class InfoBarManager {
@@ -12,9 +8,9 @@ public class InfoBarManager {
     private static int _maxCount;
     private static UIControls.Grid? _root;
     private static UIControls.StackPanel _showPanel;
-    private static Window _mainWindow;
-    private static Compositor _compositor;
-    public static void Init(Window mainWindow, UIControls.Grid root, int maxCount = 3) {
+    private static UIXaml.Window _mainWindow;
+    private static UI.Composition.Compositor _compositor;
+    public static void Init(UIXaml.Window mainWindow, UIControls.Grid root, int maxCount = 3) {
         _root = root;
         _maxCount = maxCount;
         _mainWindow = mainWindow;
@@ -98,8 +94,8 @@ public class InfoBarManager {
     }
     
     
-    private static SpringVector3NaturalMotionAnimation? _scaleAnimation;
-    private static SpringScalarNaturalMotionAnimation _fadeAnimation;
+    private static UI.Composition.SpringVector3NaturalMotionAnimation? _scaleAnimation;
+    private static UI.Composition.SpringScalarNaturalMotionAnimation _fadeAnimation;
     
     private static readonly TimeSpan FadePeriod = TimeSpan.FromMilliseconds(200);
     
@@ -123,35 +119,35 @@ public class InfoBarManager {
         _fadeAnimation.FinalValue = finalValue;
     }
     
-    private static void InfoBarPointerEntered(object sender, PointerRoutedEventArgs e) {
+    private static void InfoBarPointerEntered(object sender, UIXaml.Input.PointerRoutedEventArgs e) {
         CreateScaleAnimation(new Vector3(1.0f), new Vector3(0.99f));
-        (sender as UIElement)?.StartAnimation(_scaleAnimation);
+        (sender as UIXaml.UIElement)?.StartAnimation(_scaleAnimation);
     }
     
-    private static void InfoBarPointerExited(object sender, PointerRoutedEventArgs e) {
+    private static void InfoBarPointerExited(object sender, UIXaml.Input.PointerRoutedEventArgs e) {
         CreateScaleAnimation(new Vector3(1.0f), new Vector3(0.99f));
-        (sender as UIElement)?.StartAnimation(_scaleAnimation);
+        (sender as UIXaml.UIElement)?.StartAnimation(_scaleAnimation);
     }
     
     private static void InfoBarFadeIn(object sender) {
         CreateFadeAnimation(0, 1);
-        (sender as UIElement)?.StartAnimation(_fadeAnimation);
+        (sender as UIXaml.UIElement)?.StartAnimation(_fadeAnimation);
     }
     
     private static void InfoBarFadeOut(object sender) {
         CreateFadeAnimation(1, 0);
-        (sender as UIElement)?.StartAnimation(_fadeAnimation);
+        (sender as UIXaml.UIElement)?.StartAnimation(_fadeAnimation);
         
     }
     
     private static void InfoBarTranslationIn(object sender) {
         var uiElement = sender as UIControls.InfoBar;
-        CreateScaleAnimation(new Vector3(0f),new Vector3(1f));
+        CreateScaleAnimation(new Vector3(0f), new Vector3(1f));
         uiElement?.StartAnimation(_scaleAnimation);
     }
     private static void InfoBarTranslationOut(object sender) {
         var uiElement = sender as UIControls.InfoBar;
-        CreateScaleAnimation(new Vector3(1f),new Vector3(0f));
+        CreateScaleAnimation(new Vector3(1f), new Vector3(0f));
         uiElement?.StartAnimation(_scaleAnimation);
     }
 }

@@ -1,6 +1,4 @@
 ﻿using DnkGallery.Model;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Navigation;
 

@@ -33,6 +33,7 @@
         DisplayName="DnkGallery"
         Description="DnkGallery">
         <uap:SplashScreen />
+        <uap:DefaultTile/>
       </uap:VisualElements>
     </Application>
   </Applications>

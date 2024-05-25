@@ -1,14 +1,10 @@
 ﻿using LibGit2Sharp;
-using Microsoft.UI.Text;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Media;
-using DataTemplate = CSharpMarkup.WinUI.DataTemplate;
 
 namespace DnkGallery.Presentation.Pages;
 
 partial class MainPage {
     private Grid AppTitleBar(string title) => Grid(Columns(Auto, Auto, Auto),
-            FontIcon(new FontFamily("Segoe UI Emoji")).Glyph("🥵")
+            FontIcon(new UIMedia.FontFamily("Segoe UI Emoji")).Glyph("🥵")
                 .HorizontalAlignment(HorizontalAlignment.Left)
                 .VCenter(),
             TextBlock()
@@ -86,7 +82,7 @@ partial class MainPage {
                             VStack(
                                 TextBlock().Bind("MessageShort")
                                     .FontSize(16)
-                                    .FontWeight(FontWeights.Bold),
+                                    .FontWeight(UI.Text.FontWeights.Bold),
                                 TextBlock().Bind("Committer")
                                     .FontSize(12),
                                 TextBlock()
