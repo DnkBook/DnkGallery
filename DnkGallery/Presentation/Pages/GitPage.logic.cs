@@ -1,7 +1,5 @@
 ﻿using DnkGallery.Model;
 using DnkGallery.Model.Github;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.UI.Xaml.Navigation;
 using Path = System.IO.Path;
 namespace DnkGallery.Presentation.Pages;
 
@@ -15,7 +13,7 @@ public sealed partial class GitPage : BasePage<BindableGitViewModel>, IBuildUI {
     private void ContentInvoke(UIControls.Page obj) {
     }
     
-    protected override async void OnNavigatedTo(NavigationEventArgs e) {
+    protected override async void OnNavigatedTo(UIXaml.Navigation.NavigationEventArgs e) {
         base.OnNavigatedTo(e);
         await vm?.Model?.Status();
     }

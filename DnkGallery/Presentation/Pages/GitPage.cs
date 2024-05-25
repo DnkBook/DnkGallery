@@ -1,8 +1,4 @@
-﻿using Microsoft.UI.Text;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Media;
-using DataTemplate = CSharpMarkup.WinUI.DataTemplate;
-namespace DnkGallery.Presentation.Pages;
+﻿namespace DnkGallery.Presentation.Pages;
 
 public partial class GitPage {
     public static readonly string Header = "Git";
@@ -11,7 +7,7 @@ public partial class GitPage {
             Rows(Star, Auto),
             VStack(
                 TextBlock("变更列表")
-                    .FontWeight(FontWeights.Bold).FontSize(24),
+                    .FontWeight(UI.Text.FontWeights.Bold).FontSize(24),
                 GridView()
                     .ItemsSource().Bind(vm?.AddedAnas)
                     .ItemTemplate(GridViewTemplate)
@@ -20,7 +16,7 @@ public partial class GitPage {
                 Columns(Star, Auto),
                TextBox().Header("提交信息")
                    .AcceptsReturn(true)
-                   .TextWrapping(TextWrapping.Wrap)
+                   .TextWrapping(UIXaml.TextWrapping.Wrap)
                    .MaxHeight(200)
                    .ScrollViewer_VerticalScrollBarVisibility(UIControls.ScrollBarVisibility.Auto)
                    .Text().Bind(vm?.Message, BindingMode.TwoWay),
@@ -39,7 +35,7 @@ public partial class GitPage {
     private DataTemplate GridViewTemplate => DataTemplate(() =>
         Grid(
             Image().Source().Bind("Path")
-                .Stretch(Stretch.UniformToFill).HCenter().VCenter(),
+                .Stretch(UIMedia.Stretch.UniformToFill).HCenter().VCenter(),
             VStack(
                     TextBlock()
                         .Text()

@@ -1,6 +1,5 @@
 ﻿using Uno.Extensions;
-using NavigationTransitionInfo = Microsoft.UI.Xaml.Media.Animation.NavigationTransitionInfo;
-using PageStackEntry = Microsoft.UI.Xaml.Navigation.PageStackEntry;
+
 
 namespace DnkGallery.Presentation.Utils;
 
@@ -102,7 +101,7 @@ public static class Navigator {
     /// </summary>
     /// <param name="pageStackEntry">frame页面栈的Entry</param>
     /// <returns></returns>
-    public static UIControls.NavigationViewItem? FindNavigationViewItem(PageStackEntry pageStackEntry) {
+    public static UIControls.NavigationViewItem? FindNavigationViewItem(UIXaml.Navigation.PageStackEntry pageStackEntry) {
         var navigationParameter = pageStackEntry.Parameter as NavigationParameter;
         
         var menusItems =  navigationParameter.Type switch {
@@ -147,7 +146,7 @@ public static class Navigator {
     /// 回退时导航条目同步选中，神金
     /// </summary>
     /// <param name="pageStackEntry">frame页面栈Entry</param>
-    public static void Back(PageStackEntry pageStackEntry) {
+    public static void Back(UIXaml.Navigation.PageStackEntry pageStackEntry) {
         var findNavigationViewItem = FindNavigationViewItem(pageStackEntry);
         NavigationView.SelectedItem = findNavigationViewItem;
         var navigationTag = findNavigationViewItem?.Tag as NavigationTag;
@@ -175,7 +174,7 @@ public static class Navigator {
     /// <param name="navigationTransitionInfo">动画参数</param>
     /// <typeparam name="TParameter">参数类型</typeparam>
     public static void Navigate<TParameter>(UIControls.NavigationViewItem navigationViewItem,
-        NavigationTransitionInfo? navigationTransitionInfo = default) {
+        UIMedia.Animation.NavigationTransitionInfo? navigationTransitionInfo = default) {
         var navigationTag = navigationViewItem.Tag as NavigationTag<TParameter>;
         NavigationView.Header = navigationTag?.Header;
         NavigationView.SelectedItem = navigationViewItem;
@@ -194,7 +193,7 @@ public static class Navigator {
     /// <typeparam name="TParameter">参数类型</typeparam>
     public static void Navigate<TParameter>(string name, Type page, string header,
         NavigationParameter<TParameter>? parameter = default,
-        NavigationTransitionInfo? navigationTransitionInfo = default) {
+        UIMedia.Animation.NavigationTransitionInfo? navigationTransitionInfo = default) {
         NavigationView.Header = header;
         Frame.Name = name;
         Frame.Navigate(page, parameter, navigationTransitionInfo);
@@ -208,7 +207,7 @@ public static class Navigator {
     /// <param name="header">页头</param>
     /// <param name="navigationTransitionInfo">动画参数</param>
     public static void Navigate(string name, Type page, string header,
-        NavigationTransitionInfo? navigationTransitionInfo = default) {
+        UIMedia.Animation.NavigationTransitionInfo? navigationTransitionInfo = default) {
         NavigationView.Header = header;
         Frame.Name = name;
         Frame.Navigate(page, null, navigationTransitionInfo);

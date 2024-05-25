@@ -36,7 +36,7 @@ public class Application : Microsoft.UI.Xaml.NativeApplication
 
         ImageLoader.Instance.Init(config);
 
-        ImageSource.DefaultImageLoader = ImageLoader.Instance.LoadImageAsync;
+        UIMedia.ImageSource.DefaultImageLoader = ImageLoader.Instance.LoadImageAsync;
     }
 }
 

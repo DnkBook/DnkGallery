@@ -1,9 +1,4 @@
-﻿using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Media;
-using Uno.Extensions.Toolkit;
-using DataTemplate = Microsoft.UI.Xaml.DataTemplate;
-
-namespace DnkGallery.Presentation.Pages;
+﻿namespace DnkGallery.Presentation.Pages;
 
 public partial class GalleryPage {
     public void BuildUI() =>
@@ -38,7 +33,7 @@ public partial class GalleryPage {
     private DataTemplate GridViewTemplate => DataTemplate(() =>
         Grid(
             Image().Source().Bind("ImageBytes", convert: (byte[] bytes) => ByteArrayConvertToBitmapImage(bytes))
-                .Stretch(Stretch.UniformToFill).HCenter().VCenter(),
+                .Stretch(UIMedia.Stretch.UniformToFill).HCenter().VCenter(),
             VStack(
                     TextBlock()
                         .Text()

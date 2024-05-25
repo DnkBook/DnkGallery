@@ -3,9 +3,6 @@ using DnkGallery.Model;
 using DnkGallery.Model.Github;
 using DnkGallery.Model.Services;
 using LibGit2Sharp;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.UI.Xaml;
 
 namespace DnkGallery.Presentation.Pages;
 
@@ -21,7 +18,7 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
     private UIControls.Button branchesComboBoxFlyoutCancel;
     private UIControls.Button branchesComboBoxFlyoutConfirm;
     
-    public MainPage(Window window, IHost host) {
+    public MainPage(UIXaml.Window window, IHost host) {
         MainWindow = window;
         Host = host;
         Ioc.Service = host.Services;
@@ -38,7 +35,7 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
         Loaded += PageLoaded;
     }
     
-    private async void PageLoaded(object sender, RoutedEventArgs e) {
+    private async void PageLoaded(object sender, UIXaml.RoutedEventArgs e) {
         CreateAutoSyncCheck();
         pushHyperlinkButton.Tapped += (sender, args) => OpenPushDialog();
         branchesComboBox.TextSubmitted += BranchesComboBoxTextSubmitted;
@@ -86,7 +83,7 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
         branchesComboBox.ContextFlyout.Hide();
     }
     
-    private async void CreateBranch(object sender, RoutedEventArgs e) {
+    private async void CreateBranch(object sender, UIXaml.RoutedEventArgs e) {
         try {
             var gitApi = Service.GetService<IGitApi>()!;
             var branchName = await vm.Model.CreateBranchName;

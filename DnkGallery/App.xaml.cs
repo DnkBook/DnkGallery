@@ -2,14 +2,22 @@ using DnkGallery.Model;
 using DnkGallery.Model.Github;
 using DnkGallery.Model.Services;
 using DnkGallery.Presentation.Pages;
-using Microsoft.UI.Composition.SystemBackdrops;
 using Octokit;
-using Uno.Resizetizer;
-using Application = Microsoft.UI.Xaml.Application;
+using Uno.Extensions;
+using Uno.Extensions.Configuration;
+using Uno.Extensions.Hosting;
+using Uno.Extensions.Localization;
+// using Uno.Resizetizer;
+using Uno.Toolkit.UI;
+using Uno.UI;
+using Microsoft.UI.Xaml;
+#if WINDOWS
+using Microsoft.UI.Composition.SystemBackdrops;
+#endif
 
 namespace DnkGallery;
 
-public partial class App : Application {
+public partial class App : UIXaml.Application {
     /// <summary>
     /// Initializes the singleton application object. This is the first line of authored code
     /// executed, and as such is the logical equivalent of main() or WinMain().
@@ -18,17 +26,10 @@ public partial class App : Application {
         this.InitializeComponent();
     }
     
-    protected Window? MainWindow { get; private set; }
+    protected UIXaml.Window? MainWindow { get; private set; }
     protected IHost? Host { get; private set; }
     
-    protected override void OnLaunched(LaunchActivatedEventArgs args) {
-        // Load WinUI Resources
-        Resources.Build(r => r.Merged(
-            new XamlControlsResources()));
-        
-        // Load Uno.UI.Toolkit Resources
-        Resources.Build(r => r.Merged(
-            new ToolkitResources()));
+    protected override void OnLaunched(UIXaml.LaunchActivatedEventArgs args) {
         var builder = this.CreateBuilder(args)
             .Configure(host => host
 #if DEBUG
@@ -87,7 +88,7 @@ public partial class App : Application {
 #if DEBUG
         MainWindow.EnableHotReload();
 #endif
-        MainWindow.SetWindowIcon();
+        // MainWindow.SetWindowIcon();
         
         Host = builder.Build();
         
@@ -95,15 +96,14 @@ public partial class App : Application {
 #if WINDOWS
         // Ensure the current window is active
         MainWindow.ExtendsContentIntoTitleBar = true;
-        MainWindow.SystemBackdrop = new MicaBackdrop() {
+        MainWindow.SystemBackdrop = new UIMedia.MicaBackdrop() {
             Kind = MicaKind.BaseAlt
         };
-        Resources.Build(r => {
-            r.Add("NavigationViewContentMargin", new Thickness(0, 48, 0, 0));
-            r.Add("WindowCaptionBackground", new SolidColorBrush(Colors.Transparent));
-            r.Add("WindowCaptionBackgroundDisabled", new SolidColorBrush(Colors.Transparent));
-        });
+        // Resources.Add("NavigationViewContentMargin", new Thickness(0, 48, 0, 0));
+        // Resources.Add("WindowCaptionBackground", new UIMedia.SolidColorBrush(Colors.Transparent));
+        // Resources.Add("WindowCaptionBackgroundDisabled", new UIMedia.SolidColorBrush(Colors.Transparent));
 #endif
+           
         // Do not repeat app initialization when the Window already has content,
         
         // Ensure the current window is active

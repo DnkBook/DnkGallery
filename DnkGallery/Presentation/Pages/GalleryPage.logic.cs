@@ -1,9 +1,7 @@
-﻿using System.Collections.Immutable;
-using Windows.System;
+﻿using Windows.System;
 using DnkGallery.Model;
 using DnkGallery.Model.Github;
 using DnkGallery.Model.Services;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;

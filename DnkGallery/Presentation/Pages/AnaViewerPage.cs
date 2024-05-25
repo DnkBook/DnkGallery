@@ -1,6 +1,3 @@
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Media;
-using DataTemplate = Microsoft.UI.Xaml.DataTemplate;
 namespace DnkGallery.Presentation.Pages;
 
 public partial class AnaViewerPage {
@@ -73,7 +70,7 @@ public partial class AnaViewerPage {
     private DataTemplate GridViewTemplate => DataTemplate(() =>
         Grid(
             Image().Source().Bind("Path")
-                .Stretch(Stretch.UniformToFill).HCenter().VCenter()
+                .Stretch(UIMedia.Stretch.UniformToFill).HCenter().VCenter()
         ).Width(150).Height(100)
     );
     private static ItemsPanelTemplate GridViewPanelTemplate => 
