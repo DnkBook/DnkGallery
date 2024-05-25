@@ -25,7 +25,7 @@ public class LocalGalleryService: IGalleryService {
     
     private List<Chapter> TreeChapter(DirectoryInfo directoryInfo) {
         var directoryInfos = directoryInfo.GetDirectories("*", SearchOption.TopDirectoryOnly);
-        return directoryInfos.Select(x =>
+        return directoryInfos.Where(x => !x.Name.StartsWith('.')).Select(x =>
             new Chapter(x.Name, x.FullName, x.GetDirectories().Length > 0, [x.Name])).ToList();
     }
 }

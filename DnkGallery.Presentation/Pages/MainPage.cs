@@ -54,7 +54,7 @@ partial class MainPage {
                             ComboBox()
                                 .IsEditable(true)
                                 .Assign(out branchesComboBox)
-                                .SelectedValue().Bind(vm?.BranchName,BindingMode.TwoWay)
+                                .SelectedValue().Bind(vm?.BranchName)
                                 .Width(160)
                                 .DisplayMemberPath("FriendlyName")
                                 .SelectedValuePath("FriendlyName")
@@ -96,8 +96,8 @@ partial class MainPage {
                                     .FontSize(12)
                             ).Padding(8)
                         ).ItemsSource().Bind(vm?.BeingPushedCommits),
-                        CheckBox("提交Pull Request").Bind(vm?.AddPullRequest).Grid_Row(1).Margin(0,16),
-                        Button("Pull Request").BindCommand(vm?.PullRequest).Grid_Row(2)
+                        CheckBox("提交Pull Request").Bind(vm?.AddPullRequest,BindingMode.TwoWay).Grid_Row(1).Margin(0,16)
+                        // Button("Pull Request").BindCommand(vm?.PullRequest).Grid_Row(2)
                     )
                 )
                 .XamlRoot(XamlRoot)
