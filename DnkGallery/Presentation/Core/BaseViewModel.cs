@@ -1,5 +1,4 @@
 using DnkGallery.Model;
-using Microsoft.Extensions.DependencyInjection;
 namespace DnkGallery.Presentation.Core;
 
 public record BaseViewModel {
