@@ -38,5 +38,5 @@ public interface IGitApi {
     Task<BranchCollection> Branches(string localReposPath);
     
     
-    Task<Branch> CreateBranch(string localReposPath, string? branchName);
+    Task<Branch> CreateBranch(string localReposPath, string? branchName, string? remoteName = "origin");
 }

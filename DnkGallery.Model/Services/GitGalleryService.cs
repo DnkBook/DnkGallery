@@ -8,7 +8,7 @@ public class GitGalleryService(IGitApi gitApi, Setting setting)
     public async Task<IList<Chapter>> Chapters(string dir) {
         var settingGitRepos = setting.GitRepos;
         var contentDirs = await ContentDirs(settingGitRepos, dir);
-        var tasks = contentDirs.Select(async x => {
+        var tasks = contentDirs.Where(x => !x.Name.StartsWith('.')).Select(async x => {
             var reposChildrenContent = await gitApi.GetReposContent(settingGitRepos, x.Path);
             var count = reposChildrenContent?.Where(x => x.Type == ContentType.Dir).Count();
             var chapter = new Chapter(x.Name, x.Path, count > 0, [x.Name]);

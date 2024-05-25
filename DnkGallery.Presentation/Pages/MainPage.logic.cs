@@ -51,24 +51,26 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
         // };
         await GetBranches();
         // branchesComboBox.Loaded += async (o, args) => {
-        await vm.Model.BranchName.Update(_ => Settings.Branch, CancellationToken.None);
+        
+        var gitApi = Service.GetService<IGitApi>()!;
+        var branch = await gitApi.Branch(Settings.LocalPath);
+        await vm.Model.BranchName.Update(_ => branch.FriendlyName, CancellationToken.None);
         // };
     }
     
     private async Task SwitchBranch(string selection) {
         try {
-            await vm.Model.BranchName.Update(_ => selection, CancellationToken.None);
             var gitApi = Service.GetService<IGitApi>()!;
             var branches = await vm.Model.Branches;
             var branch = branches.FirstOrDefault(x => x.FriendlyName == selection);
             await gitApi.Checkout(Settings.LocalPath, branch);
             
-            Settings.Branch = selection;
-            await Settings.SaveAsync();
-            
             await vm?.Model.Status();
-            
             InfoBarManager.Show(UIControls.InfoBarSeverity.Success, GitPage.Header, $"切换{selection}分支成功");
+            
+            branchesComboBox.Text = selection;
+            await vm.Model.BranchName.Update(_ => selection, CancellationToken.None);
+            
         } catch (Exception ex) {
             InfoBarManager.Show(UIControls.InfoBarSeverity.Error, GitPage.Header, ex.Message);
         }
@@ -90,9 +92,10 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
             var branchName = await vm.Model.CreateBranchName;
             var branch = await gitApi.CreateBranch(Settings.LocalPath, branchName);
             await vm.Model.Branches.AddAsync(branch);
-            await SwitchBranch(branch.FriendlyName);
             InfoBarManager.Show(UIControls.InfoBarSeverity.Success, GitPage.Header, $"创建{branchName}分支成功");
             CloseBranchesComboboxFlyout();
+            
+            await SwitchBranch(branch.FriendlyName);
         } catch (Exception ex) {
             InfoBarManager.Show(UIControls.InfoBarSeverity.Error, GitPage.Header, ex.Message);
         }
@@ -114,6 +117,9 @@ public sealed partial class MainPage : BasePage<BindableMainViewModel>, IBuildUI
         UIControls.ComboBoxTextSubmittedEventArgs args) {
         args.Handled = true;
         var text = args.Text;
+        if (text == await vm.Model.BranchName) {
+            return;
+        }
         var asyncEnumerable = await vm.Model.Branches;
         var branch = asyncEnumerable.FirstOrDefault(x => x.FriendlyName == text);
         if (branch is not null) {
@@ -302,7 +308,7 @@ public partial record MainViewModel : BaseViewModel {
         }
     }
     
-    public async Task GitPush() { 
+    public async Task GitPush() {
         try {
             var gitApi = Service.GetService<IGitApi>()!;
             var beingPushedCommits = await BeingPushedCommits;
@@ -321,7 +327,7 @@ public partial record MainViewModel : BaseViewModel {
     public async Task PullRequest(string message) {
         try {
             var gitApi = Service.GetService<IGitApi>()!;
-            await gitApi.PullRequest(Settings.GitRepos, Settings.LocalPath,Settings.GitAccessToken, message, Settings.Branch);
+            await gitApi.PullRequest(Settings.GitRepos, Settings.LocalPath, Settings.GitAccessToken, message, await BranchName);
             InfoBarManager.Show(UIControls.InfoBarSeverity.Success, GitPage.Header, "提交Pull Request成功");
         } catch (Exception e) {
             InfoBarManager.Show(UIControls.InfoBarSeverity.Error, GitPage.Header, e.Message);
@@ -351,7 +357,7 @@ public partial record MainViewModel : BaseViewModel {
             var commits = await gitApi.BeingPushedCommits(Settings.LocalPath);
             await PushCount.Update(_ => commits.Count(), CancellationToken.None);
         } catch (Exception e) {
-            InfoBarManager.Show(UIControls.InfoBarSeverity.Error, GitPage.Header, e.Message);
+            // InfoBarManager.Show(UIControls.InfoBarSeverity.Error, GitPage.Header, e.Message);
         }
     }
 }
