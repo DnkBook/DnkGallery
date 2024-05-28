@@ -291,6 +291,10 @@ public partial record MainViewModel : BaseViewModel {
     
     public async Task GitPull() {
         try {
+            if (string.IsNullOrWhiteSpace(Settings.LocalPath)) {
+                InfoBarManager.Show(UIControls.InfoBarSeverity.Warning, GitPage.Header, "请先设置本地路径");
+                return;
+            }
             var gitApi = Service.GetService<IGitApi>()!;
             await Status();
             if (!gitApi.CheckWorkDir(Settings.LocalPath)) {
@@ -333,6 +337,9 @@ public partial record MainViewModel : BaseViewModel {
     
     public async Task Status() {
         try {
+            if (Settings.Source == Source.Local || Settings.LocalPath is null) {
+                return;
+            }
             var gitApi = Service.GetService<IGitApi>()!;
             var repositoryStatus = await gitApi.Status(Settings.LocalPath);
             if (repositoryStatus is null) {
