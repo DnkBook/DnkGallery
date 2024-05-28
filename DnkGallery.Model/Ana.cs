@@ -1,4 +1,5 @@
-﻿namespace DnkGallery.Model;
+﻿using System.Globalization;
+namespace DnkGallery.Model;
 
 public record Ana {
     public Ana(string path, DateTime dateTime, string name) {
@@ -22,18 +23,20 @@ public record Ana {
     
     public Ana(string name, string path) {
         var fileNameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension(name);
-        var dateTime = DateTime.ParseExact(fileNameWithoutExtension, "yyyy-MM-dd_HHmmss", null);
+        if (DateTime.TryParseExact(fileNameWithoutExtension, "yyyy-MM-dd_HHmmss", null, DateTimeStyles.None,out var dateTime)) {
+            DateTime = dateTime;
+        }
         Path = path;
-        DateTime = dateTime;
         Name = name;
     }
     
     public Ana(string path) {
         var fileName = System.IO.Path.GetFileName(path);
         var fileNameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension(fileName);
-        var dateTime = DateTime.ParseExact(fileNameWithoutExtension, "yyyy-MM-dd_HHmmss", null);
+        if (DateTime.TryParseExact(fileNameWithoutExtension, "yyyy-MM-dd_HHmmss", null, DateTimeStyles.None,out var dateTime)) {
+            DateTime = dateTime;
+        }
         Path = path;
-        DateTime = dateTime;
         Name = fileName;
     }
 }
