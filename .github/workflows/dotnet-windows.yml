@@ -138,5 +138,5 @@ jobs:
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ${{ env.Solution_Name  }}\Publish\DnkGallery.exe
-        asset_name: DnkGallery_x64_${{ github.ref }}.exe
+        asset_name: DnkGallery_x64_${{ github.ref_name }}.exe
         asset_content_type: application/exe
