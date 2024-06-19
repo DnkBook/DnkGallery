@@ -126,8 +126,7 @@ jobs:
       with:
         tag_name: ${{ github.ref }}
         release_name: Release ${{ github.ref }}
-        body_render_type: markdown # rst and markdown support
-        body_render_path: ${{ env.Solution_Name  }}/docs/version/${{ github.ref }}/CHANGELOG.md
+        body_path: ${{ env.Solution_Name  }}/docs/version/${{ github.ref }}/CHANGELOG.md
 #        body: preview
         draft: false
         prerelease: false
