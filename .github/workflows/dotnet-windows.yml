@@ -126,7 +126,7 @@ jobs:
       with:
         tag_name: ${{ github.ref }}
         release_name: Release ${{ github.ref }}
-        body_path: ${{ env.Solution_Name  }}/docs/version/${{ github.ref_name }}/CHANGELOG.md
+        body_path: docs/version/${{ github.ref_name }}/CHANGELOG.md
 #        body: preview
         draft: false
         prerelease: false
