@@ -8,10 +8,10 @@ partial class MainPage {
                 .HorizontalAlignment(HorizontalAlignment.Left)
                 .VCenter(),
             TextBlock()
-                .Margin(12, 0, 0, 0)
                 .Grid_Column(1)
                 .Text(title)
-                .VCenter().Margin(28, 0, 0, 0)
+                .VCenter()
+                .Margin(28, 0, 0, 0)
         )
         .Height(48)
         .Margin(48, 0, 0, 0)
